@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+git init
+
+git config user.name "Jiyuan Zhang"
+git config user.email "90346231+jiyuzh@users.noreply.github.com"
+
+git add .
+echo "Ready to commit"

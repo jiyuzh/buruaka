@@ -1,0 +1,15 @@
+{
+	"Alt-/": "lua:comment.comment",
+	"Alt-s": "SaveAs",
+	"Alt-z": "Redo",
+	"Ctrl-/": "ToggleHelp",
+	"Ctrl-g": "command-edit:goto ",
+	"Ctrl-o": "command:tree",
+	"Ctrl-r": "command:hsplit,command:term",
+	"Ctrl-w": "Quit",
+	"CtrlDown": "FindNext",
+	"CtrlUnderscore": "lua:comment.comment",
+	"CtrlUp": "FindPrevious",
+	"F1": "CommandMode",
+	"F4": "command:jumptag"
+}

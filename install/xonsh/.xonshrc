@@ -1,0 +1,6 @@
+echo
+echo ">>> Welcome to xonsh <<<"
+echo
+
+aliases['grep'] = 'grep --color=auto'
+aliases['ll'] = 'ls -alhF'

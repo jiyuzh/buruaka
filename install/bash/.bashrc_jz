@@ -1,0 +1,33 @@
+# Only work in interactive environment
+if [[ $- =~ i ]]; then
+
+	# Rewrite tools
+	alias ls='ls -F --color=al'
+	alias ll='ls -alhF'
+	alias vi='micro'
+	export EDITOR=micro
+
+	# Larget history
+	HISTCONTROL=ignoreboth:erasedups HISTSIZE=100000 HISTFILESIZE=200000
+
+	# New PS from https://unix.stackexchange.com/a/129283
+	git_branch () { git rev-parse --abbrev-ref HEAD 2> /dev/null; }
+	HOST='\033[02;36m\]\h'; HOST=' '$HOST
+	TIME='\033[01;31m\]\t \033[01;32m\]'
+	LOCATION=' \033[01;34m\]`pwd | sed "s#\(/[^/]\{1,\}/[^/]\{1,\}/[^/]\{1,\}/\).*\(/[^/]\{1,\}/[^/]\{1,\}\)/\{0,1\}#\1_\2#g"`'
+	BRANCH=' \033[00;33m\]$(git_branch)\[\033[00m\]\n\$ '
+	PS1=$TIME$USER$HOST$LOCATION$BRANCH
+	PS2='\[\033[01;36m\]> '
+
+	# Auto completion
+	[ -f /etc/bash_completion ] && ! shopt -oq posix && . /etc/bash_completion
+
+	# Path
+	export PATH="$PATH:{{buruaka}}"
+
+	# TMUX
+	if [[ -z "$TMUX" ]] && [[ -n "$SSH_CONNECTION" ]]; then
+		tmux attach-session -t ssh-tmux-jz || tmux new-session -s ssh-tmux-jz
+	fi
+
+fi
