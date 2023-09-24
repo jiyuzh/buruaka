@@ -40,6 +40,9 @@ if [[ $- =~ i ]]; then
 	export PATH="$PATH:{{buruaka}}"
 	export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
 
+	# Timezone
+	export TZ="America/Chicago"
+
 	# TMUX
 	if [[ -z "$TMUX" ]] && [[ -n "$SSH_CONNECTION" ]]; then
 		tmux attach-session -t ssh-tmux-jz || tmux new-session -s ssh-tmux-jz
