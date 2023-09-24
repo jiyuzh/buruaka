@@ -22,6 +22,20 @@ if [[ $- =~ i ]]; then
 	# Auto completion
 	[ -f /etc/bash_completion ] && ! shopt -oq posix && . /etc/bash_completion
 
+	# 24-bit color support
+	apply_24b=""
+	case "$COLORTERM" in
+	truecolor|24bit|24-bit)
+		apply_24b=true
+		;;
+	esac
+	if [ "$apply_24b" = "" ] && [ "$(tput colors)" = "16777216" ]; then
+		apply_24b=true
+	fi
+	if [ "$apply_24b" = "true" ]; then
+		export MICRO_TRUECOLOR=1
+	fi
+
 	# Path
 	export PATH="$PATH:{{buruaka}}"
 	export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"

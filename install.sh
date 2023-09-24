@@ -102,6 +102,7 @@ function install_micro {
 
 	install_file "micro" "bindings.json" "$HOME/.config/micro/bindings.json"
 	install_file "micro" "settings.json" "$HOME/.config/micro/settings.json"
+	install_file "micro" "colorschemes/vscode.micro" "$HOME/.config/micro/colorschemes/vscode.micro"
 }
 
 function install_ripgrep {
