@@ -104,14 +104,13 @@ function install_micro {
 	install_file "micro" "settings.json" "$HOME/.config/micro/settings.json"
 }
 
-function install_utils {
+function install_ripgrep {
 	sudo apt-get update
 	sudo apt-get install -y ripgrep
-}
 
-function install_utils {
-	sudo apt-get update
-	sudo apt-get install -y ripgrep
+	export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
+
+	install_file "ripgrep" ".ripgreprc" "$HOME/.config/ripgrep/ripgreprc"
 }
 
 function install_ssh_conf {

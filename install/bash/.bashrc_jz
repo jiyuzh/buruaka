@@ -24,6 +24,7 @@ if [[ $- =~ i ]]; then
 
 	# Path
 	export PATH="$PATH:{{buruaka}}"
+	export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
 
 	# TMUX
 	if [[ -z "$TMUX" ]] && [[ -n "$SSH_CONNECTION" ]]; then
