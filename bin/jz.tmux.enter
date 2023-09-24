@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+if [ -z "$TMUX" ]; then
+	tmux attach-session -t ssh-tmux-jz || tmux new-session -s ssh-tmux-jz
+fi
