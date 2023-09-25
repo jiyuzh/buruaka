@@ -60,7 +60,8 @@ function install_core {
 	sudo apt-get install -y apt-transport-https
 	sudo apt-get update
 	sudo apt-get install -y bash curl git man perl sudo wget screen vim nano software-properties-common zip unzip tar
-	sudo apt-get install -y python3 python3-dev python3-pip
+	sudo apt-get install -y python3 python3-dev python3-pip python3-venv
+	python3 -m userpath append ~/.local/bin
 }
 
 function install_kernbuild {
@@ -81,7 +82,7 @@ function install_dotnet {
 	sudo rm packages-microsoft-prod.deb
 
 	sudo apt-get update
-	sudo apt-get install dotnet-sdk-7.0
+	sudo apt-get install -y dotnet-sdk-7.0
 }
 
 function install_xonsh {
