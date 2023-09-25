@@ -222,3 +222,67 @@ function move_path {
 		mv -vT "$arg" "$source" "$target"
 	fi
 }
+
+# Symbolic link a file or folder. Create parent folders when necessary.
+# Parameters:
+# 	$1: Source file or folder.
+# 	$2: Destination file or folder. Must be the exact target.
+# 	$3: [Optional] Should the target or its parent folder prevents the link operation,
+# 	    optionally remove them after optional interactive confirmation.
+# 	    0: [Default] Do not perform overwrite.
+# 	    1: Perform overwrite with confirmation.
+# 	    2: Perform overwrite without confirmation.
+# 	$4: [Optional] Select whether the operations should be run with sudo.
+# 	    0: [Default] Run as-is.
+# 	    1: Run with sudo.
+# Interaction:
+# 	The link operation trace.
+# 	Confirmation prompt if demanded.
+# Return:
+# 	None
+# Usage: link_path [source_path] [dest_path] [[is_force]] [[is_sudo]]
+# Example: link_path ./.xonshrc ~/.xonshrc 0 0
+function link_path {
+	local source="$1"
+	local target="$2"
+
+	local isForce="0"
+	if [ "$#" -ge 3 ]; then
+		isForce="$3"
+	fi
+
+	local isSudo="0"
+	if [ "$#" -ge 4 ]; then
+		isSudo="$4"
+	fi
+
+	local dir=$(dirname "$target")
+
+	# parent does not exists or is not a directory
+	if sudo test ! -d "$dir"; then
+		# create the parent
+		if [ "$isSudo" -eq 1 ]; then
+			sudo mkdir -pv "$dir"
+		else
+			mkdir -pv "$dir"
+		fi
+	fi
+
+	local arg="-b"
+	if [ "$isForce" -eq 0 ]; then
+		if sudo test -e "$target"; then
+			return
+		fi
+	elif [ "$isForce" -eq 1 ]; then
+		arg="-i"
+	elif [ "$isForce" -eq 2 ]; then
+		arg="-f"
+	fi
+
+	if [ "$isSudo" -eq 1 ]; then
+		sudo ln -vTs "$arg" "$source" "$target"
+	else
+		ln -vTs "$arg" "$source" "$target"
+	fi
+}
+

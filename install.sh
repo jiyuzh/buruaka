@@ -36,8 +36,12 @@ if [ -z "$DISTRO_VERSION" ]; then
 	exit 1
 fi
 
-# TODO: do_confirm _discard "Perform install?"
-# TODO: mode selection: evaluation setup or self setup
+echo "The following targets will be installed:"
+for var in "$@"; do
+	echo "    $var"
+done
+echo
+do_confirm _discard "Perform install?"
 
 #
 # Installer
@@ -48,14 +52,14 @@ fi
 # 	$2: File name.
 # 	$3: Target path,
 function install_file {
-	copy_path "$SCRIPT_DIR/install/$1/$2" "$3" 1 1
+	link_path "$SCRIPT_DIR/install/$1/$2" "$3" 1 1
 }
 
 function install_core {
 	sudo apt-get update
 	sudo apt-get install -y apt-transport-https
 	sudo apt-get update
-	sudo apt-get install -y bash curl git man perl sudo wget screen vim nano software-properties-common
+	sudo apt-get install -y bash curl git man perl sudo wget screen vim nano software-properties-common zip unzip tar
 	sudo apt-get install -y python3 python3-dev python3-pip
 }
 
@@ -150,8 +154,11 @@ fi
 END
 	fi
 
+	# generate from template
+	cp -vf "$SCRIPT_DIR/install/bash/.bashrc_jz.tmpl" "$SCRIPT_DIR/install/bash/.bashrc_jz"
+	sed -i "s@{{buruaka}}@$SCRIPT_DIR/bin@g" "$SCRIPT_DIR/install/bash/.bashrc_jz"
+
 	install_file "bash" ".bashrc_jz" "$HOME/.bashrc_jz"
-	sed -i "s@{{buruaka}}@$SCRIPT_DIR/bin@g" "$HOME/.bashrc_jz"
 }
 
 function install_tmux {
@@ -161,3 +168,8 @@ function install_tmux {
 	install_file "tmux" ".tmux.conf" "$HOME/.tmux.conf"
 	install_file "tmux" ".tmux.conf.local" "$HOME/.tmux.conf.local"
 }
+
+for var in "$@"; do
+	echo "Installing $var"
+	eval "install_$var"
+done
