@@ -52,7 +52,7 @@ do_confirm _discard "Perform install?"
 # 	$2: File name.
 # 	$3: Target path,
 function install_file {
-	link_path "$SCRIPT_DIR/install/$1/$2" "$3" 1 1
+	link_path "$SCRIPT_DIR/install/$1/$2" "$3" 1 0
 }
 
 function install_core {
@@ -124,7 +124,7 @@ function install_ssh_conf {
 		sudo touch "$HOME/.ssh/config"
 	fi
 
-	if ! sudo grep -q "Host github.deanon" "$HOME/.ssh/config"; then
+	if ! sudo grep -Fq "Host github.deanon" "$HOME/.ssh/config"; then
 		cat << 'END' >> "$HOME/.ssh/config"
 Host github.deanon
 	HostName github.com
@@ -146,7 +146,7 @@ function install_bash_conf {
 		sudo touch "$HOME/.bashrc"
 	fi
 
-	if ! sudo grep -q 'if [ -f ~/.bashrc_jz ]' "$HOME/.bashrc"; then
+	if ! sudo grep -Fq 'if [ -f ~/.bashrc_jz ]; then' "$HOME/.bashrc"; then
 		cat << 'END' >> "$HOME/.bashrc"
 if [ -f ~/.bashrc_jz ]; then
 	. ~/.bashrc_jz
@@ -155,7 +155,7 @@ END
 	fi
 
 	# generate from template
-	cp -vf "$SCRIPT_DIR/install/bash/.bashrc_jz.tmpl" "$SCRIPT_DIR/install/bash/.bashrc_jz"
+	sudo cp -vf "$SCRIPT_DIR/install/bash/.bashrc_jz.tmpl" "$SCRIPT_DIR/install/bash/.bashrc_jz"
 	sed -i "s@{{buruaka}}@$SCRIPT_DIR/bin@g" "$SCRIPT_DIR/install/bash/.bashrc_jz"
 
 	install_file "bash" ".bashrc_jz" "$HOME/.bashrc_jz"
