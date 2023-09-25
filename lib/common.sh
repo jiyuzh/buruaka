@@ -279,7 +279,7 @@ function link_path {
 		arg="-f"
 	fi
 
-	target=$(sudo realpath -e "$source")
+	source=$(sudo realpath -e "$source")
 
 	if [ "$isSudo" -eq 1 ]; then
 		sudo ln -vTs "$arg" "$source" "$target"
