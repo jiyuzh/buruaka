@@ -93,7 +93,7 @@ function install_xonsh {
 
 function install_micro {
 	sudo apt-get update
-	sudo apt-get install -y xclip # for SSH clipboard support
+	sudo apt-get install -y xsel xclip # for SSH clipboard support
 	sudo apt-get install -y fzf exuberant-ctags # for jump plugin
 
 	curl https://getmic.ro | sudo bash
@@ -163,7 +163,7 @@ END
 
 function install_tmux {
 	sudo apt-get update
-	sudo apt-get install -y tmux xclip
+	sudo apt-get install -y tmux xsel xclip
 
 	install_file "tmux" ".tmux.conf" "$HOME/.tmux.conf"
 	install_file "tmux" ".tmux.conf.local" "$HOME/.tmux.conf.local"
