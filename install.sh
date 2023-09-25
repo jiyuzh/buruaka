@@ -85,13 +85,6 @@ function install_dotnet {
 	sudo apt-get install -y dotnet-sdk-7.0
 }
 
-function install_xonsh {
-	sudo apt-get update
-	sudo apt-get install -y xonsh
-
-	install_file "xonsh" ".xonshrc" "$HOME/.xonshrc"
-}
-
 function install_micro {
 	sudo apt-get update
 	sudo apt-get install -y xsel xclip # for SSH clipboard support
@@ -119,6 +112,57 @@ function install_ripgrep {
 	install_file "ripgrep" ".ripgreprc" "$HOME/.config/ripgrep/ripgreprc"
 }
 
+function install_tmux {
+	sudo apt-get update
+	sudo apt-get install -y tmux xsel xclip
+
+	install_file "tmux" ".tmux.conf" "$HOME/.tmux.conf"
+	install_file "tmux" ".tmux.conf.local" "$HOME/.tmux.conf.local"
+}
+
+function install_xonsh {
+	sudo apt-get update
+	sudo apt-get install -y xonsh
+
+	install_file "xonsh" ".xonshrc" "$HOME/.xonshrc"
+}
+
+function install_bash_conf {
+	if sudo test ! -e "$HOME/.bashrc"; then
+		sudo mkdir -vp "$HOME"
+		sudo touch "$HOME/.bashrc"
+	fi
+
+	if ! sudo grep -Fq 'if [ -f ~/.bashrc_jz ]; then' "$HOME/.bashrc"; then
+		cat << 'END' >> "$HOME/.bashrc"
+if [ -f ~/.bashrc_jz ]; then
+	. ~/.bashrc_jz
+fi
+END
+	fi
+
+	# generate from template
+	copy_path "$SCRIPT_DIR/install/bash/.bashrc_jz.tmpl" "$SCRIPT_DIR/install/bash/.bashrc_jz" 1 1
+	sed -i "s@{{buruaka}}@$SCRIPT_DIR/bin@g" "$SCRIPT_DIR/install/bash/.bashrc_jz"
+
+	install_file "bash" ".bashrc_jz" "$HOME/.bashrc_jz"
+}
+
+function install_grub_conf {
+	if sudo test ! -e "/etc/default/grub"; then
+		sudo mkdir -vp "/etc/default/"
+		sudo touch "/etc/default/grub"
+	fi
+
+	if sudo test -e "/etc/default/grub"; then
+		TS=`date '+%F-%s'`
+		move_path "/etc/default/grub" "/etc/default/grub.bak.$TS" 1 1
+	fi
+
+	copy_path "$SCRIPT_DIR/install/grub/grub.default" "/etc/default/grub" 1 1
+	sudo update-grub
+}
+
 function install_ssh_conf {
 	if sudo test ! -e "$HOME/.ssh/config"; then
 		sudo mkdir -vp "$HOME/.ssh"
@@ -139,35 +183,6 @@ END
 
 	sudo pip3 install ssh-import-id
 	ssh-import-id gh:jiyuzh
-}
-
-function install_bash_conf {
-	if sudo test ! -e "$HOME/.bashrc"; then
-		sudo mkdir -vp "$HOME"
-		sudo touch "$HOME/.bashrc"
-	fi
-
-	if ! sudo grep -Fq 'if [ -f ~/.bashrc_jz ]; then' "$HOME/.bashrc"; then
-		cat << 'END' >> "$HOME/.bashrc"
-if [ -f ~/.bashrc_jz ]; then
-	. ~/.bashrc_jz
-fi
-END
-	fi
-
-	# generate from template
-	sudo cp -vf "$SCRIPT_DIR/install/bash/.bashrc_jz.tmpl" "$SCRIPT_DIR/install/bash/.bashrc_jz"
-	sed -i "s@{{buruaka}}@$SCRIPT_DIR/bin@g" "$SCRIPT_DIR/install/bash/.bashrc_jz"
-
-	install_file "bash" ".bashrc_jz" "$HOME/.bashrc_jz"
-}
-
-function install_tmux {
-	sudo apt-get update
-	sudo apt-get install -y tmux xsel xclip
-
-	install_file "tmux" ".tmux.conf" "$HOME/.tmux.conf"
-	install_file "tmux" ".tmux.conf.local" "$HOME/.tmux.conf.local"
 }
 
 for var in "$@"; do
