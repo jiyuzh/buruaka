@@ -251,8 +251,8 @@ tmux_conf_theme_right_separator_sub="|"
 #     - #{uptime_s}
 #     - #{username}
 #     - #{username_ssh}
-tmux_conf_theme_status_left=" ❐ #S | #(git -C #{pane_current_path} rev-parse --abbrev-ref HEAD) #{pane_current_path} #{prefix_highlight} "
-tmux_conf_theme_status_right=" #{prefix}#{mouse}#{pairing}#{synchronized} , CPU #{cpu_percentage} RAM #{ram_percentage} LOAD #{loadavg} TMP #{cpu_temp} , %R , %d %b | #{username}#{root} | #{hostname} "
+tmux_conf_theme_status_left=" ❐ #{hostname_full} | #(git -C #{pane_current_path} rev-parse --abbrev-ref HEAD) #{pane_current_path} #{prefix_highlight} "
+tmux_conf_theme_status_right=" #{prefix}#{mouse}#{pairing}#{synchronized} , CPU #{cpu_percentage} RAM #{ram_percentage} LOAD #{loadavg} TMP #{cpu_temp} , %R , %d %b | #{username}#{root} | #S "
 
 # status left style
 tmux_conf_theme_status_left_fg="$tmux_conf_theme_colour_6,$tmux_conf_theme_colour_7,$tmux_conf_theme_colour_8"
