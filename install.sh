@@ -56,6 +56,7 @@ function install_file {
 }
 
 function install_core {
+	# How can you survive without these?
 	sudo apt-get update
 	sudo apt-get install -y apt-transport-https
 	sudo apt-get update
@@ -65,6 +66,7 @@ function install_core {
 }
 
 function install_kernbuild {
+	# Kernel build tools (tested for 5.15)
 	sudo apt-get update
 	sudo apt-get install -y build-essential linux-tools-common linux-tools-generic liblz4-tool dwarves binutils elfutils gdb flex bison libncurses-dev libssl-dev libelf-dev
 	sudo apt-get install -y cmake gcc g++ make libiberty-dev autoconf zstd libboost-all-dev arch-install-scripts
@@ -72,10 +74,12 @@ function install_kernbuild {
 }
 
 function install_checkinstall {
+	# No make install or pain later
 	sudo apt-get install -y checkinstall
 }
 
 function install_dotnet {
+	# I love Microsoft
 	declare repo_version=$(if command -v lsb_release &> /dev/null; then lsb_release -r -s; else grep -oP '(?<=^VERSION_ID=).+' /etc/os-release | tr -d '"'; fi)
 	sudo wget https://packages.microsoft.com/config/ubuntu/$repo_version/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
 	sudo dpkg -i packages-microsoft-prod.deb
@@ -86,6 +90,7 @@ function install_dotnet {
 }
 
 function install_micro {
+	# Install micro editor, depends on bash_conf to override `vi` (use `vim` for _that_ editor)
 	sudo apt-get update
 	sudo apt-get install -y xsel xclip # for SSH clipboard support
 	sudo apt-get install -y fzf exuberant-ctags # for jump plugin
@@ -104,6 +109,7 @@ function install_micro {
 }
 
 function install_ripgrep {
+	# Nice little grep tool with sane regex
 	sudo apt-get update
 	sudo apt-get install -y ripgrep
 
@@ -113,6 +119,7 @@ function install_ripgrep {
 }
 
 function install_tmux {
+	# TMUX configuration for myself, depends on bash_conf to auto-start
 	sudo apt-get update
 	sudo apt-get install -y tmux xsel xclip
 
@@ -121,6 +128,7 @@ function install_tmux {
 }
 
 function install_xonsh {
+	# Not used, but maybe one day...
 	sudo apt-get update
 	sudo apt-get install -y xonsh
 
@@ -128,6 +136,7 @@ function install_xonsh {
 }
 
 function install_bash_conf {
+	# Mostly visual changes, but also auto-starts TMUX on SSH and tweak rg behavior
 	if sudo test ! -e "$HOME/.bashrc"; then
 		sudo mkdir -vp "$HOME"
 		sudo touch "$HOME/.bashrc"
@@ -148,7 +157,29 @@ END
 	install_file "bash" ".bashrc_jz" "$HOME/.bashrc_jz"
 }
 
+function install_gdb_conf {
+	# For full-VM kernel debugging in QEMU KVM
+	# This depends on grub_conf (nokaslr) to work properly
+	# It also needs to modify virsh xml:
+	# <domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+	#   <qemu:commandline>
+	#     <qemu:arg value='-s'/>
+	#   </qemu:commandline>
+	#   ...
+	# </domain>
+	# For some kernel versions, this patch also needs to be backported
+	# https://lore.kernel.org/lkml/20230607221337.2781730-1-florian.fainelli@broadcom.com/T/
+	sudo apt-get update
+	sudo apt-get install -y gdb
+
+	install_file "gdb" ".gdbinit" "$HOME/.gdbinit"
+}
+
 function install_grub_conf {
+	# Update grub to:
+	#   Allow kernel selection
+	#   Remember last selected entry
+	#   Disable KASLR (for KGDB)
 	if sudo test ! -e "/etc/default/grub"; then
 		sudo mkdir -vp "/etc/default/"
 		sudo touch "/etc/default/grub"
@@ -164,6 +195,8 @@ function install_grub_conf {
 }
 
 function install_ssh_conf {
+	# Add unsafe key pair to system and import trusted keys from github
+	# Need to enter private key manually
 	if sudo test ! -e "$HOME/.ssh/config"; then
 		sudo mkdir -vp "$HOME/.ssh"
 		sudo touch "$HOME/.ssh/config"
