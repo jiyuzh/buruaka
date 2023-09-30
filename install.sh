@@ -214,6 +214,8 @@ END
 	install_file "ssh" "id_ed25519_unsafe.pub" "$HOME/.ssh/id_ed25519_unsafe.pub"
 	sudo nano "$HOME/.ssh/id_ed25519_unsafe"
 
+	sudo chmod 600 "$HOME/.ssh/*"
+
 	sudo pip3 install ssh-import-id
 	ssh-import-id gh:jiyuzh
 }
