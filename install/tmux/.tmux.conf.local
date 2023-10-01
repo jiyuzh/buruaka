@@ -362,23 +362,21 @@ unbind C-b
 set -g prefix C-a
 bind C-a send-prefix
 
-# Switch panes using Alt-Arrow or Prefix-Arrow
-bind -n M-Left select-pane -L
-bind -n M-Right select-pane -R
-bind -n M-Up select-pane -U
-bind -n M-Down select-pane -D
-bind -r Left select-pane -L
-bind -r Right select-pane -R
-bind -r Up select-pane -U
-bind -r Down select-pane -D
+# Switch panes using Prefix-Ctrl-Arrow
+bind -r C-Left select-pane -L
+bind -r C-Right select-pane -R
+bind -r C-Up select-pane -U
+bind -r C-Down select-pane -D
 
-# Switch windows using Alt-<> or Prefix-<>
-bind -n M-, previous-window
-bind -n M-. next-window
-bind -n M-/ last-window
-bind -r , previous-window
-bind -r . next-window
-bind / last-window
+# Switch windows using Alt-Arrow or Prefix-Arrow
+bind -n M-Left previous-window
+bind -n M-Right next-window
+bind -n M-Down last-window
+bind -n M-Up last-window
+bind -r Left previous-window
+bind -r Right next-window
+bind Down last-window
+bind Up last-window
 
 # Switch windows Alt+Number (this works in vscode)
 bind -n M-1 select-window -t 1
