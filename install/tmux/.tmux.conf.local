@@ -352,6 +352,9 @@ tmux_conf_copy_to_os_clipboard=true
 # -- user customizations -------------------------------------------------------
 # this is the place to override or undo settings
 
+# Bugfix for Windows Terminal
+set -sg escape-time 10 #!important
+
 # Ctrl-A for prefix, double tap for Ctrl-A
 set -gu prefix2
 unbind C-a
