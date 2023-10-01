@@ -390,10 +390,10 @@ bind -n M-8 select-window -t 8
 bind -n M-9 select-window -t 9
 
 # Split panes using Prefix-|-
-bind -r "|" split-window -h -c "#{pane_current_path}"
 bind -r "\\" split-window -h -c "#{pane_current_path}"
 bind -r "-" split-window -v -c "#{pane_current_path}" #!important
-bind -r "_" split-window -v -c "#{pane_current_path}" #!important
+bind -r C-"\\" split-window -h -c "#{pane_current_path}"
+bind -r C-"-" split-window -v -c "#{pane_current_path}" #!important
 
 # Create window using Prefix-Ctrl-CN
 bind -r C-c new-window -c "#{pane_current_path}" #!important
