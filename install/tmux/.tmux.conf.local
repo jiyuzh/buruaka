@@ -402,7 +402,7 @@ bind -r C-n new-window -c "#{pane_current_path}" #!important
 # Convert windows and panes with Prefix-[]'
 bind-key "[" choose-window 'join-pane -v -s "%%"'
 bind-key "]" choose-window 'join-pane -h -s "%%"'
-bind-key "\'" break-pane -t :
+bind-key "=" break-pane -d
 
 # Reload config Using Prefix-Ctrl-R
 bind C-r bind r run '"$TMUX_PROGRAM" ${TMUX_SOCKET:+-S "$TMUX_SOCKET"} source "$TMUX_CONF"' \; display "#{TMUX_CONF} sourced" #!important
