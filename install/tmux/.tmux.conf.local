@@ -399,7 +399,7 @@ bind -r C-"-" split-window -v -c "#{pane_current_path}" #!important
 bind -r C-c new-window -c "#{pane_current_path}" #!important
 bind -r C-n new-window -c "#{pane_current_path}" #!important
 
-# Convert windows and panes with Prefix-[]'
+# Convert windows and panes with Prefix-[]=
 bind-key "[" choose-window 'join-pane -v -s "%%"'
 bind-key "]" choose-window 'join-pane -h -s "%%"'
 bind-key "=" break-pane -d
