@@ -219,10 +219,10 @@ tmux_conf_theme_left_separator_main=""
 tmux_conf_theme_left_separator_sub="|"
 tmux_conf_theme_right_separator_main=""
 tmux_conf_theme_right_separator_sub="|"
-#tmux_conf_theme_left_separator_main='\uE0B0'  # /!\ you don't need to install Powerline
-#tmux_conf_theme_left_separator_sub='\uE0B1'   #   you only need fonts patched with
-#tmux_conf_theme_right_separator_main='\uE0B2' #   Powerline symbols or the standalone
-#tmux_conf_theme_right_separator_sub='\uE0B3'  #   PowerlineSymbols.otf font, see README.md
+tmux_conf_theme_left_separator_main='\uE0B0'  # /!\ you don't need to install Powerline
+tmux_conf_theme_left_separator_sub='\uE0B1'   #   you only need fonts patched with
+tmux_conf_theme_right_separator_main='\uE0B2' #   Powerline symbols or the standalone
+tmux_conf_theme_right_separator_sub='\uE0B3'  #   PowerlineSymbols.otf font, see README.md
 
 # status left/right content:
 #   - separate main sections with "|"
@@ -251,7 +251,7 @@ tmux_conf_theme_right_separator_sub="|"
 #     - #{uptime_s}
 #     - #{username}
 #     - #{username_ssh}
-tmux_conf_theme_status_left=" ❐ #{hostname_full} | #(git -C #{pane_current_path} rev-parse --abbrev-ref HEAD) #{pane_current_path} #{prefix_highlight} "
+tmux_conf_theme_status_left=" ❐ #{hostname_full} | #{pane_current_path} | #(git -C #{pane_current_path} rev-parse --abbrev-ref HEAD || echo '?') #{prefix_highlight}"
 tmux_conf_theme_status_right=" #{prefix}#{mouse}#{pairing}#{synchronized} , CPU #{cpu_percentage} RAM #{ram_percentage} LOAD #{loadavg} TMP #{cpu_temp} , %R , %d %b | #{username}#{root} | #S "
 
 # status left style
@@ -413,6 +413,15 @@ set -g status-interval 1
 
 # Enable clipboard
 set-option -g set-clipboard on
+
+# Enable consistent prefix highlight
+set -g @prefix_highlight_prefix_prompt 'Tmux'
+set -g @prefix_highlight_copy_prompt 'Copy'
+set -g @prefix_highlight_sync_prompt 'Sync'
+set -g @prefix_highlight_show_copy_mode 'on'
+set -g @prefix_highlight_copy_mode_attr 'fg=colour231,bg=colour14'
+set -g @prefix_highlight_show_sync_mode 'on'
+set -g @prefix_highlight_sync_mode_attr 'fg=colour231,bg=colour06'
 
 # -- tpm -----------------------------------------------------------------------
 
