@@ -1,0 +1,51 @@
+diff --git a/10_linux.bak b/10_linux
+index 1b9f091..dcfb17d 100755
+--- a/10_linux.bak
++++ b/10_linux
+@@ -176,6 +176,8 @@ linux_entry ()
+   type="$3"
+   args="$4"
+
++  menu_header=""
++
+   if [ -z "$boot_device_id" ]; then
+       boot_device_id="$(grub_get_device_id "${GRUB_DEVICE}")"
+   fi
+@@ -194,9 +196,11 @@ linux_entry ()
+          title_correction_code="${title_correction_code}if [ \"x\$default\" = '$quoted' ]; then default='$(echo "$replacement_title" | grub_quote)'; fi;"
+          grub_warn "$(gettext_printf "Please don't use old title \`%s' for GRUB_DEFAULT, use \`%s' (for versions before 2.00) or \`%s' (for 2.00 or later)" "$GRUB_ACTUAL_DEFAULT" "$replacement_title" "gnulinux-advanced-$boot_device_id>gnulinux-$version-$type-$boot_device_id")"
+       fi
+-      echo "menuentry '$(echo "$title" | grub_quote)' ${CLASS} \$menuentry_id_option 'gnulinux-$version-$type-$boot_device_id' {" | sed "s/^/$submenu_indentation/"
++      menu_header="menuentry '$(echo "$title" | grub_quote)' ${CLASS} \$menuentry_id_option 'gnulinux-$version-$type-$boot_device_id' {"
++      echo "$menu_header" | sed "s/^/$submenu_indentation/"
+   else
+-      echo "menuentry '$(echo "$os" | grub_quote)' ${CLASS} \$menuentry_id_option 'gnulinux-simple-$boot_device_id' {" | sed "s/^/$submenu_indentation/"
++      menu_header="menuentry '$(echo "$os" | grub_quote)' ${CLASS} \$menuentry_id_option 'gnulinux-simple-$boot_device_id' {"
++      echo "$menu_header" | sed "s/^/$submenu_indentation/"
+   fi
+   if [ "$quick_boot" = 1 ]; then
+       echo "   recordfail" | sed "s/^/$submenu_indentation/"
+@@ -205,6 +209,23 @@ linux_entry ()
+       save_default_entry | grub_add_tab
+   fi
+
++  extra_args=`GRUB_MENU_HEADER="$menu_header" perl -e '
++    my $config = $ENV{GRUB_CMDLINE_LINUX_KERNEL};
++    my $target = $ENV{GRUB_MENU_HEADER};
++    my @lines = split("\n", $config);
++
++    foreach my $line (@lines)
++    {
++      next if $line =~ /^\s*$/s;
++
++      my ($pattern, $appending) = split(" : ", $line);
++      $pattern =~ s/^\s+//;
++
++      print $appending if $target =~ qr#$pattern#;
++    }
++  '`
++  args="$args $extra_args"
++
+   # Use ELILO's generic "efifb" when it's known to be available.
+   # FIXME: We need an interface to select vesafb in case efifb can't be used.
+   if [ "x$GRUB_GFXPAYLOAD_LINUX" = x ]; then
