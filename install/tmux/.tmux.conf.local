@@ -252,7 +252,7 @@ tmux_conf_theme_right_separator_sub='\uE0B3'  #   PowerlineSymbols.otf font, see
 #     - #{username}
 #     - #{username_ssh}
 tmux_conf_theme_status_left=" ❐ #{hostname_full} | #{pane_current_path} | #(git -C #{pane_current_path} rev-parse --abbrev-ref HEAD || echo '?') #{prefix_highlight}"
-tmux_conf_theme_status_right=" #{prefix}#{mouse}#{pairing}#{synchronized} , CPU #{cpu_percentage} RAM #{ram_percentage} LOAD #{loadavg} USER #(w -h | cut -d ' ' -f 1 | sort | uniq | wc -l) , %R , %b %d | #{username}#{root} | #S "
+tmux_conf_theme_status_right=" #{prefix}#{mouse}#{pairing}#{synchronized} , CPU #{cpu_percentage} RAM #{ram_percentage} LOAD #{loadavg} USER #(w -h | cut -d ' ' -f 1 | sort | uniq | wc -l) , %R , %b %d | #{username}#{root} | #(uname -r) "
 
 # status left style
 tmux_conf_theme_status_left_fg="$tmux_conf_theme_colour_6,$tmux_conf_theme_colour_7,$tmux_conf_theme_colour_8"
