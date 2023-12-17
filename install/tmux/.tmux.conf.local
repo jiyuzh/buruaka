@@ -420,6 +420,9 @@ set -g status-interval 1
 # Enable clipboard
 set-option -g set-clipboard on
 
+# Large history
+set -g history-limit 50000
+
 # Enable consistent prefix highlight
 set -g @prefix_highlight_prefix_prompt 'Tmux'
 set -g @prefix_highlight_copy_prompt 'Copy'
