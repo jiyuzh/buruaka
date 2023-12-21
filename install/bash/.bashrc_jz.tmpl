@@ -2,26 +2,9 @@
 if [[ $- =~ i ]]; then
 
 	# Rewrite tools
-	____cdls_hi=8 # high watermark (lines of output)
-	____cdls_lo=6 # low watermark (lines of output)
 	____cdls () {
 		cd "$1"
-
-		____cdls_txt=`ls -C -w $(tput cols) --color=always`
-		____cdls_cnt=`echo "$____cdls_txt" | wc -l`
-
-		if [ $____cdls_cnt -lt $____cdls_hi ]; then
-			echo "$____cdls_txt"
-		else
-			____cdls_head=$(($____cdls_lo / 2))
-			____cdls_tail=$(($____cdls_lo - $____cdls_head))
-			____cdls_rem=$(($____cdls_cnt - $____cdls_lo))
-
-			echo "$____cdls_txt" | head -n $____cdls_head
-			echo "..."
-			echo "$____cdls_txt" | tail -n $____cdls_tail
-			echo "($____cdls_rem lines not shown)"
-		fi
+		ls-short
 	}
 
 	alias ls='ls --color=auto'
