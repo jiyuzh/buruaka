@@ -1,0 +1,44 @@
+#!/usr/bin/env sh
+
+module=`ls -t *.ko | head -n 1`
+kernel="/lib/modules/$(uname -r)/build/vmlinux"
+
+do_next=1
+
+if [ "$do_next" -ne 0 ] && [ ! -z "$module" ]; then
+	module=`realpath "$module" 2>/dev/null`
+	
+	if [ -f "$module" ]; then
+		echo
+		echo "- Results in module $module:"
+		echo
+		eu-addr2line -Afie "$module" "$1"
+		do_next="$?"
+	fi
+fi
+
+if [ "$do_next" -ne 0 ] && [ ! -z "$kernel" ]; then
+	kernel=`realpath "$kernel" 2>/dev/null`
+
+	if [ -f "$kernel" ]; then
+		echo
+		echo "- Results in kernel $kernel:"
+		echo
+		eu-addr2line -Afie "$kernel" "$1"
+		do_next="$?"
+	fi
+fi
+
+if [ "$do_next" -ne 0 ]; then
+	echo
+	echo "- Results in running kernel:"
+	echo
+	sudo eu-addr2line -Afik "$1"
+	do_next="$?"
+fi
+
+if [ "$do_next" -ne 0 ]; then
+	echo
+	echo "- No more kernel object file candidates"
+	exit 1
+fi

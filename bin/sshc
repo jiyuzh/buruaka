@@ -11,4 +11,8 @@ wait_online() {
 
 wait_online
 
+tmux rename-window "ssh://$SSH_LOGIN"
+
 ssh "$SSH_LOGIN"
+
+tmux setw automatic-rename
