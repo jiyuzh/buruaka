@@ -220,6 +220,18 @@ END
 	ssh-import-id gh:jiyuzh
 }
 
+function install_kcompile {
+	pushd "$SCRIPT_DIR/bin/"
+	if sudo test ! -e "$SCRIPT_DIR/bin/kernel-compile"; then
+		git clone github.deanon:jiyuzh/kernel-compile.git
+	fi
+
+	pushd "$SCRIPT_DIR/bin/kernel-compile/"
+	git pull
+	popd
+	popd
+}
+
 for var in "$@"; do
 	echo "Installing $var"
 	eval "install_$var"
