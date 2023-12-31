@@ -1,3 +1,0 @@
-[submodule "kernel-compile"]
-	path = kernel-compile
-	url = https://github.com/jiyuzh/kernel-compile.git
