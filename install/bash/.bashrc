@@ -75,7 +75,7 @@ HISTFILESIZE=200000
 HISTTIMEFORMAT='%F %T '
 
 # PowerLine-like PS
-____SEP=''
+____SEP=''
 ____git_branch () {
 	____git=`git rev-parse --abbrev-ref HEAD 2> /dev/null`
 
