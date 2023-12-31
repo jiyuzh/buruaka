@@ -152,7 +152,7 @@ END
 
 	# generate from template
 	copy_path "$SCRIPT_DIR/install/bash/.bashrc_jz.tmpl" "$SCRIPT_DIR/install/bash/.bashrc_jz" 1 1
-	sed -i "s@{{buruaka}}@$SCRIPT_DIR/bin@g" "$SCRIPT_DIR/install/bash/.bashrc_jz"
+	sed -i "s@{{buruaka}}@$SCRIPT_DIR@g" "$SCRIPT_DIR/install/bash/.bashrc_jz"
 
 	install_file "bash" ".bashrc_jz" "$HOME/.bashrc_jz"
 }
