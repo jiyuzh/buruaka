@@ -14,9 +14,10 @@ if [[ $- =~ i ]]; then
 	export EDITOR=micro
 
 	# Larget history
-	HISTCONTROL=''
+	HISTCONTROL='ignoredups'
 	HISTSIZE=100000
 	HISTFILESIZE=200000
+	HISTTIMEFORMAT='%F %T '
 
 	# PowerLine-like PS
 	____SEP=''
