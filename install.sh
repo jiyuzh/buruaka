@@ -239,6 +239,8 @@ function install_kcompile {
 }
 
 for var in "$@"; do
+	echo ""
+	echo "--------------------------------------------------------"
 	echo "Installing $var"
 	eval "install_$var"
 done
