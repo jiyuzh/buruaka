@@ -30,10 +30,26 @@ source "$SCRIPT_DIR/lib/common.sh"
 echo "Environment Harmonization Script by Jiyuan Zhang"
 echo
 
-DISTRO_VERSION=`lsb_release -a 2>&1 | perl -ne 'print "$1" if /\bUbuntu (20|22)\.04/'`
+DISTRO_VERSION=`lsb_release -a 2>&1 | perl -ne 'print "$1" if /\b(Ubuntu 2.*)/'`
 if [ -z "$DISTRO_VERSION" ]; then
 	echo "This script requires Ubuntu 20.04 or 22.04 to run"
 	exit 1
+else
+	echo "Detected your OS as: $DISTRO_VERSION"
+	echo
+fi
+
+if [ "$EUID" -eq 0 ]; then
+	echo "It seems like you are running this script as root."
+	echo "- If you are running the script with sudo, please quit, remove sudo and try again."
+	echo "- If you are running the script with root account, please ignore this message."
+	echo
+	do_confirm issudo "Are you running this with sudo?"
+	echo
+	if [ "$issudo" -eq "1" ]; then
+		echo "Please remove sudo and try again"
+		exit 1
+	fi
 fi
 
 echo "The following targets will be installed:"
@@ -41,7 +57,14 @@ for var in "$@"; do
 	echo "    $var"
 done
 echo
-do_confirm _discard "Perform install?"
+do_confirm goahead "Perform install?"
+echo
+if [ "$goahead" -ne "1" ]; then
+	echo "Goodbye"
+	exit 1
+fi
+
+sudo -v
 
 #
 # Installer
@@ -53,6 +76,10 @@ do_confirm _discard "Perform install?"
 # 	$3: Target path,
 function install_file {
 	link_path "$SCRIPT_DIR/install/$1/$2" "$3" 1 0
+}
+
+function install_noop {
+	true
 }
 
 function install_core {
@@ -244,8 +271,17 @@ function install_kcompile {
 }
 
 for var in "$@"; do
-	echo ""
+	echo
 	echo "--------------------------------------------------------"
+	echo
 	echo "Installing $var"
+	echo
+	echo "--------------------------------------------------------"
+	echo
 	eval "install_$var"
 done
+
+echo
+echo "--------------------------------------------------------"
+echo
+echo "All operations have finished successfully"
