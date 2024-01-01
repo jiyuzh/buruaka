@@ -80,13 +80,12 @@ function install_checkinstall {
 
 function install_dotnet {
 	# I love Microsoft
-	declare repo_version=$(if command -v lsb_release &> /dev/null; then lsb_release -r -s; else grep -oP '(?<=^VERSION_ID=).+' /etc/os-release | tr -d '"'; fi)
-	sudo wget https://packages.microsoft.com/config/ubuntu/$repo_version/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-	sudo dpkg -i packages-microsoft-prod.deb
-	sudo rm packages-microsoft-prod.deb
-
-	sudo apt-get update
-	sudo apt-get install -y dotnet-sdk-8.0
+	sudo wget https://dot.net/v1/dotnet-install.sh -O /opt/dotnet-install.sh
+	sudo chmod +x /opt/dotnet-install.sh
+	sudo /opt/dotnet-install.sh --version latest --install-dir /opt/dotnet/
+	if sudo test -e "/opt/dotnet/dotnet"; then
+		sudo ln -s /opt/dotnet/dotnet /usr/local/bin/dotnet
+	fi
 }
 
 function install_micro {
