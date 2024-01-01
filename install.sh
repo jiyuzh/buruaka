@@ -61,7 +61,7 @@ function install_core {
 	sudo apt-get install -y apt-transport-https
 	sudo apt-get update
 	sudo apt-get install -y bash curl git man perl sudo wget screen vim nano software-properties-common zip unzip tar
-	sudo apt-get install -y python3 python3-dev python3-pip python3-venv
+	sudo apt-get install -y python3 python3-dev python3-pip python3-venv python3-userpath
 	python3 -m userpath append ~/.local/bin
 }
 
@@ -86,7 +86,7 @@ function install_dotnet {
 	sudo rm packages-microsoft-prod.deb
 
 	sudo apt-get update
-	sudo apt-get install -y dotnet-sdk-7.0
+	sudo apt-get install -y dotnet-sdk-8.0
 }
 
 function install_micro {
@@ -188,6 +188,13 @@ function install_grub_conf {
 	if sudo test -e "/etc/default/grub"; then
 		TS=`date '+%F-%s'`
 		move_path "/etc/default/grub" "/etc/default/grub.bak.$TS" 1 1
+	fi
+
+	if sudo test -f "/etc/grub.d/10_linux"; then
+		TS=`date '+%F-%s'`
+		copy_path "/etc/grub.d/10_linux" "/etc/grub.d/10_linux.bak.$TS" 1 1
+		sudo chmod -x "/etc/grub.d/10_linux.bak.$TS"
+		sudo patch -l /etc/grub.d/10_linux $SCRIPT_DIR/install/grub/10_linux.patch
 	fi
 
 	copy_path "$SCRIPT_DIR/install/grub/grub.default" "/etc/default/grub" 1 1
