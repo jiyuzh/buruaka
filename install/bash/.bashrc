@@ -149,3 +149,17 @@ export TZ="America/Chicago"
 if [[ -z "$TMUX" ]] && [[ -n "$SSH_CONNECTION" ]]; then
 	tmux attach-session -t ssh-tmux-jz || tmux new-session -s ssh-tmux-jz
 fi
+
+# Postexec
+____show_exception () {
+	____ret="$?"
+	if [ "$____ret" -ne "0" ]; then
+		printf '\n'"$(tput setaf 9)(Return Code = $____ret)$(tput sgr0)"'\n'
+	fi
+}
+
+____post_exec () {
+	____show_exception
+}
+
+PROMPT_COMMAND="${PROMPT_COMMAND}"$'\n'"____post_exec;";
