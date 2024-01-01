@@ -203,9 +203,11 @@ function install_grub_conf {
 function install_ssh_conf {
 	# Add unsafe key pair to system and import trusted keys from github
 	# Need to enter private key manually
+	sudo chown -R "$USER:$USER" "$HOME/.ssh/"
+
 	if sudo test ! -e "$HOME/.ssh/config"; then
-		sudo mkdir -vp "$HOME/.ssh"
-		sudo touch "$HOME/.ssh/config"
+		mkdir -vp "$HOME/.ssh"
+		touch "$HOME/.ssh/config"
 	fi
 
 	if ! sudo grep -Fq "Host github.deanon" "$HOME/.ssh/config"; then
@@ -217,10 +219,13 @@ Host github.deanon
 END
 	fi
 
-	install_file "ssh" "id_ed25519_unsafe.pub" "$HOME/.ssh/id_ed25519_unsafe.pub"
-	sudo nano "$HOME/.ssh/id_ed25519_unsafe"
+	if sudo test ! -e "$HOME/.ssh/id_ed25519_unsafe"; then
+		install_file "ssh" "id_ed25519_unsafe.pub" "$HOME/.ssh/id_ed25519_unsafe.pub"
+		echo "Please provide the private key" | tee "$HOME/.ssh/id_ed25519_unsafe"
+		nano "$HOME/.ssh/id_ed25519_unsafe"
+	fi
 
-	sudo chmod 600 "$HOME/.ssh/*"
+	chmod 600 "$HOME/.ssh/*"
 
 	sudo pip3 install ssh-import-id
 	ssh-import-id gh:jiyuzh
