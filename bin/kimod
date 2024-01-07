@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+module=`ls -t *.ko | head -n 1`
+
+if [ ! -z "$module" ]; then
+	if [ -f "$module" ]; then
+		echo
+		echo "Installing module $module"
+		echo
+		sudo insmod "$module"
+	fi
+fi
