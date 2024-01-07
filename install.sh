@@ -52,20 +52,6 @@ if [ "$EUID" -eq 0 ]; then
 	fi
 fi
 
-echo "The following targets will be installed:"
-for var in "$@"; do
-	echo "    $var"
-done
-echo
-do_confirm goahead "Perform install?"
-echo
-if [ "$goahead" -ne "1" ]; then
-	echo "Goodbye"
-	exit 1
-fi
-
-sudo -v
-
 #
 # Installer
 #
@@ -74,7 +60,7 @@ sudo -v
 # 	$1: Package name.
 # 	$2: File name.
 # 	$3: Target path,
-function install_file {
+function deploy_file {
 	link_path "$SCRIPT_DIR/install/$1/$2" "$3" 1 0
 }
 
@@ -133,9 +119,9 @@ function install_micro {
 	micro --plugin install jump # enable definition jump with F4, need fzf and ctags
 	micro --plugin install quoter # enable auto quote surrounding for selections
 
-	install_file "micro" "bindings.json" "$HOME/.config/micro/bindings.json"
-	install_file "micro" "settings.json" "$HOME/.config/micro/settings.json"
-	install_file "micro" "colorschemes/vscode.micro" "$HOME/.config/micro/colorschemes/vscode.micro"
+	deploy_file "micro" "bindings.json" "$HOME/.config/micro/bindings.json"
+	deploy_file "micro" "settings.json" "$HOME/.config/micro/settings.json"
+	deploy_file "micro" "colorschemes/vscode.micro" "$HOME/.config/micro/colorschemes/vscode.micro"
 }
 
 function install_ripgrep {
@@ -145,7 +131,7 @@ function install_ripgrep {
 
 	export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
 
-	install_file "ripgrep" ".ripgreprc" "$HOME/.config/ripgrep/ripgreprc"
+	deploy_file "ripgrep" ".ripgreprc" "$HOME/.config/ripgrep/ripgreprc"
 }
 
 function install_delta {
@@ -192,7 +178,7 @@ function install_bat {
 	sudo dpkg -i bat-musl.deb
 	sudo rm -f bat-musl.deb
 
-	install_file "bat" "config" "$HOME/.config/bat/config"
+	deploy_file "bat" "config" "$HOME/.config/bat/config"
 }
 
 function install_moar {
@@ -205,8 +191,8 @@ function install_tmux {
 	sudo apt-get update
 	sudo apt-get install -y tmux xsel xclip
 
-	install_file "tmux" ".tmux.conf" "$HOME/.tmux.conf"
-	install_file "tmux" ".tmux.conf.local" "$HOME/.tmux.conf.local"
+	deploy_file "tmux" ".tmux.conf" "$HOME/.tmux.conf"
+	deploy_file "tmux" ".tmux.conf.local" "$HOME/.tmux.conf.local"
 }
 
 function install_xonsh {
@@ -214,7 +200,7 @@ function install_xonsh {
 	sudo apt-get update
 	sudo apt-get install -y xonsh
 
-	install_file "xonsh" ".xonshrc" "$HOME/.xonshrc"
+	deploy_file "xonsh" ".xonshrc" "$HOME/.xonshrc"
 }
 
 function install_bash_conf {
@@ -237,7 +223,7 @@ END
 	copy_path "$SCRIPT_DIR/install/bash/.bashrc_jz.tmpl" "$SCRIPT_DIR/install/bash/.bashrc_jz" 1 1
 	sed -i "s@{{buruaka}}@$SCRIPT_DIR@g" "$SCRIPT_DIR/install/bash/.bashrc_jz"
 
-	install_file "bash" ".bashrc_jz" "$HOME/.bashrc_jz"
+	deploy_file "bash" ".bashrc_jz" "$HOME/.bashrc_jz"
 }
 
 function install_gdb_conf {
@@ -255,7 +241,7 @@ function install_gdb_conf {
 	sudo apt-get update
 	sudo apt-get install -y gdb
 
-	install_file "gdb" ".gdbinit" "$HOME/.gdbinit"
+	deploy_file "gdb" ".gdbinit" "$HOME/.gdbinit"
 
 	wget -O ~/.gdb-dashboard https://git.io/.gdbinit
 	pip install pygments
@@ -309,7 +295,7 @@ END
 	fi
 
 	if sudo test ! -e "$HOME/.ssh/id_ed25519_unsafe"; then
-		install_file "ssh" "id_ed25519_unsafe.pub" "$HOME/.ssh/id_ed25519_unsafe.pub"
+		deploy_file "ssh" "id_ed25519_unsafe.pub" "$HOME/.ssh/id_ed25519_unsafe.pub"
 		echo "Please provide the private key" | tee "$HOME/.ssh/id_ed25519_unsafe"
 		nano "$HOME/.ssh/id_ed25519_unsafe"
 	fi
@@ -331,6 +317,58 @@ function install_kcompile {
 	popd
 	popd
 }
+
+help_mode=0
+help_at=""
+
+avail_install=($(declare -F | regex 'install_(\w+)$' '$1\n'))
+
+for var in "$@"; do
+	help_mode=1
+
+	for i in "${avail_install[@]}"; do
+		if [ "$i" == "$var" ]; then
+			help_mode=0
+		fi
+	done
+
+	if [ "$help_mode" -eq 1 ]; then
+		help_at="$help_at $var"
+	fi
+done
+
+if [ "$#" -le 0 ] || [ ! -z "$help_at" ]; then
+
+	if [ "$#" -le 0 ]; then
+		echo "No install target found"
+	else
+		echo "Uncognized install target found:$help_at"
+	fi
+	echo
+
+	echo "The following install targets are available:"
+	for i in "${avail_install[@]}"; do
+		echo "    $i"
+	done
+
+	exit 1
+
+fi
+
+echo "The following targets will be installed:"
+for var in "$@"; do
+	echo "    $var"
+done
+echo
+
+do_confirm goahead "Perform install?"
+echo
+if [ "$goahead" -ne "1" ]; then
+	echo "Goodbye"
+	exit 1
+fi
+
+sudo -v
 
 for var in "$@"; do
 	echo
