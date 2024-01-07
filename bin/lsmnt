@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+if command -v bat &> /dev/null; then
+	bat /proc/mounts -l fstab
+else
+	cat /proc/mounts
+fi

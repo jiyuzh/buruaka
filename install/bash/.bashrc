@@ -80,7 +80,7 @@ alias ggg='____cdls_history'
 
 alias vi='micro'
 alias grep='rg'
-alias cat='bat --paging=never'
+alias cat='bat --style=plain'
 alias diff='____diff'
 
 # Better history

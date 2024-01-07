@@ -4,9 +4,9 @@ SSH_LOGIN="$1"
 SSH_TIMEOUT=1
 
 wait_online() {
-     until [ "$(ssh -o BatchMode=yes -o ConnectTimeout=$SSH_TIMEOUT $SSH_LOGIN echo ok 2>&1)" = "ok" ]; do
-         sleep $SSH_TIMEOUT
-     done
+	until [ "$(ssh -o BatchMode=yes -o ConnectTimeout=$SSH_TIMEOUT $SSH_LOGIN echo ok 2>&1)" = "ok" ]; do
+		sleep $SSH_TIMEOUT
+	done
 }
 
 wait_online
