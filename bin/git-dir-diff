@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+path1="$1"
+path2="$2"
+
+export GIT_INDEX_FILE=`mktemp -u .git/dir-diff-temp.XXXXXX.index`
+
+global_prefix=`git rev-parse --show-toplevel`
+local_prefix=`git rev-parse --show-prefix`
+
+git add "$path1" "$path2"
+CMP_TREE=$(git write-tree)
+git diff "$CMP_TREE:$local_prefix$path1" "$CMP_TREE:$local_prefix$path2"
+
+rm "$global_prefix/.git/dir-diff-temp.*.index"
+unset GIT_INDEX_FILE

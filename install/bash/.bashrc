@@ -63,7 +63,7 @@ ____cdls_history () {
 
 ____diff () {
 	if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-		git diff --no-index "$@"
+		git dir-diff "$@"
 	elif command -v delta &> /dev/null; then
 		delta "$@"
 	else
