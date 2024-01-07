@@ -61,12 +61,27 @@ ____cdls_history () {
 	done
 }
 
+____diff () {
+	if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+		git diff --no-index "$@"
+	elif command -v delta &> /dev/null; then
+		delta "$@"
+	else
+		diff "$@"
+	fi
+}
+
 alias ls='ls --color=auto'
 alias ll='ls -alhF'
-alias vi='micro'
+
 alias g='____cdls_forward'
 alias gg='____cdls_bachward'
 alias ggg='____cdls_history'
+
+alias vi='micro'
+alias grep='rg'
+alias cat='bat'
+alias diff='____diff'
 
 # Better history
 HISTCONTROL='ignoredups'
@@ -139,11 +154,14 @@ fi
 
 # Path
 export EDITOR=micro
-export PATH="$PATH:$____buruaka/bin"
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
+export BAT_CONFIG_PATH="$HOME/.config/bat/config"
 
 # Timezone
 export TZ="America/Chicago"
+
+# Modernize LESS
+export LESS='--quiet --quit-if-one-screen --ignore-case --tabs=4 --mouse --wheel-lines=3 --RAW-CONTROL-CHARS'
 
 # TMUX
 if [[ -z "$TMUX" ]] && [[ -n "$SSH_CONNECTION" ]]; then
@@ -163,3 +181,10 @@ ____post_exec () {
 }
 
 PROMPT_COMMAND="${PROMPT_COMMAND}"$'\n'"____post_exec;";
+
+# Idempotence
+if [[ -z "$BURUAKA_INIT_ONCE" ]]; then
+	export BURUAKA_INIT_ONCE=1
+
+	export PATH="$PATH:$____buruaka/bin"
+fi

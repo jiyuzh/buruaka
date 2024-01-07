@@ -78,6 +78,10 @@ function install_file {
 	link_path "$SCRIPT_DIR/install/$1/$2" "$3" 1 0
 }
 
+function reflect_file {
+	link_path "$3" "$SCRIPT_DIR/reflect/$1/$2" 2 0
+}
+
 function install_noop {
 	true
 }
@@ -144,6 +148,53 @@ function install_ripgrep {
 	install_file "ripgrep" ".ripgreprc" "$HOME/.config/ripgrep/ripgreprc"
 }
 
+function install_delta {
+	# Use musl version to avoid libc mess
+	sudo wget -O delta-musl.deb https://github.com/dandavison/delta/releases/download/0.16.5/git-delta-musl_0.16.5_amd64.deb
+	#sudo dpkg -i delta-musl.deb
+	sudo rm -f delta-musl.deb
+
+	if sudo test ! -e "$HOME/.gitconfig"; then
+		sudo mkdir -vp "$HOME"
+		sudo touch "$HOME/.gitconfig"
+		sudo chown -R "$USER:$USER" "$HOME/.gitconfig"
+	fi
+
+	if ! sudo grep -Fq 'pager = delta' "$HOME/.gitconfig"; then
+		cat << 'END' >> "$HOME/.gitconfig"
+[core]
+	pager = delta
+
+[interactive]
+	diffFilter = delta --color-only
+
+[delta]
+	line-buffer-size = 256
+	line-numbers = true
+	syntax-theme = OneHalfLight
+	tabs = 4
+
+[merge]
+	conflictstyle = diff3
+
+[diff]
+	colorMoved = default
+END
+	fi
+
+	reflect_file "git" "gitconfig" "$HOME/.gitconfig"
+	reflect_file "delta" "gitconfig" "$HOME/.gitconfig"
+}
+
+function install_bat {
+	# Use musl version to avoid libc mess
+	sudo wget -O bat-musl.deb https://github.com/sharkdp/bat/releases/download/v0.24.0/bat-musl_0.24.0_amd64.deb
+	sudo dpkg -i bat-musl.deb
+	sudo rm -f bat-musl.deb
+
+	install_file "bat" "config" "$HOME/.config/bat/config"
+}
+
 function install_tmux {
 	# TMUX configuration for myself, depends on bash_conf to auto-start
 	sudo apt-get update
@@ -166,6 +217,7 @@ function install_bash_conf {
 	if sudo test ! -e "$HOME/.bashrc"; then
 		sudo mkdir -vp "$HOME"
 		sudo touch "$HOME/.bashrc"
+		sudo chown -R "$USER:$USER" "$HOME/.bashrc"
 	fi
 
 	if ! sudo grep -Fq 'if [ -f ~/.bashrc_jz ]; then' "$HOME/.bashrc"; then
@@ -224,18 +276,20 @@ function install_grub_conf {
 	fi
 
 	copy_path "$SCRIPT_DIR/install/grub/grub.default" "/etc/default/grub" 1 1
+	reflect_file "grub" "grub_default" "/etc/default/grub"
 	sudo update-grub
 }
 
 function install_ssh_conf {
 	# Add unsafe key pair to system and import trusted keys from github
 	# Need to enter private key manually
-	sudo chown -R "$USER:$USER" "$HOME/.ssh/"
 
 	if sudo test ! -e "$HOME/.ssh/config"; then
-		mkdir -vp "$HOME/.ssh"
-		touch "$HOME/.ssh/config"
+		sudo mkdir -vp "$HOME/.ssh"
+		sudo touch "$HOME/.ssh/config"
 	fi
+
+	sudo chown -R "$USER:$USER" "$HOME/.ssh/"
 
 	if ! sudo grep -Fq "Host github.deanon" "$HOME/.ssh/config"; then
 		cat << 'END' >> "$HOME/.ssh/config"
