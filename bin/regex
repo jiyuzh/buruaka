@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+if [ "$#" -lt 1 ]; then
+	echo "regex [PCRE pattern] [[PCRE output format]] [[PCRE match option]]"
+	echo ""
+	echo "To test your regex: https://regex101.com/"
+	echo "To learn output variables: https://perldoc.perl.org/variables"
+	echo ""
+	echo "Detail:"
+	echo "    regex [PCRE pattern]"
+	echo "        Print matched lines containing the given pattern"
+	echo "        Each line is printed only once"
+	echo "        Equivalent to: regex [PCRE pattern] '\$_' ''"
+	echo ""
+	echo "    regex [PCRE pattern] [PCRE output format]"
+	echo "        Print matched contents containing the given pattern"
+	echo "        Every match in line will be printed"
+	echo "        Equivalent to: regex [PCRE pattern] [PCRE output format] 'g'"
+	echo ""
+	echo "Note:"
+	echo "    1. The match is done line-by-line, hence /m (multiline mode) is implied"
+	echo "    2. \$0 means the entire match (alias of \$&) in this implementation as the author likes C#"
+	exit 2
+fi
+
+pat="$1"
+fmt="\$_"
+opt=""
+
+if [ "$#" -ge 2 ]; then
+	opt="g"
+	fmt="$2"
+
+	# Use $0 for match the result itself
+	fmt=$(echo "$fmt" | perl -pe 's/\$0/\$\&/g')
+fi
+
+if [ "$#" -ge 3 ]; then
+	opt="$3"
+fi
+
+# The g checking part is to prevent infinite loop
+if [[ "$opt" == *"g"* ]]; then
+	# The "Eskimo kiss" }{ closes the while loop (which is implied by -n)
+	# See https://superuser.com/questions/848315/make-perl-regex-search-exit-with-failure-if-not-found
+	perl -ne 'while (/'"$pat"'/'"$opt"') { print "'"$fmt"'"; $found ||= 1; } }{ exit 1 if !$found'
+else
+	perl -ne 'if (/'"$pat"'/'"$opt"') { print "'"$fmt"'"; $found ||= 1; } }{ exit 1 if !$found'
+fi
