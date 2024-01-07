@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+
+function do_confirm {
+	while :; do
+		read -p "$2 (y/n) " yn
+		case $yn in
+		[Yy]* )
+			eval "$1=1"
+			break
+			;;
+		[Nn]* )
+			eval "$1=0"
+			break
+			;;
+		* )
+			echo "Please answer yes or no."
+			;;
+		esac
+	done
+}
+
+function read_num {
+	while :; do
+		read -p "$2: " ans
+
+		if echo "$ans" | regex '^\d+$'; then
+			eval "$1=$ans"
+			break
+		fi
+
+		echo "Please answer an integer."
+	done
+}
+
+function read_ident {
+	while :; do
+		read -p "$2: " ans
+
+		if echo "$ans" | regex '^[a-zA-Z]\w*$'; then
+			eval "$1=$ans"
+			break
+		fi
+
+		echo "Please answer an identifier."
+	done
+}
+
+function read_str {
+	while :; do
+		read -p "$2 " ans
+
+		if [ -z "$ans" ]; then
+			echo "Please answer a string."
+		else
+			eval "$1=$ans"
+			break
+		fi
+	done
+}
+
+function read_path {
+	exist="$3"
+
+	while :; do
+		read -p "$2: " ans
+
+		if [ -z "$ans" ]; then
+			echo "Please answer an integer."
+		else
+			if [ "$exist" -eq "1" ]; then
+				file=$(realpath -e "$ans")
+
+				[ "$?" -ne "0" ] || [ -z "$file" ] || [ ! -e "$file" ]
+			else
+				dir=$(dirname "$(realpath "$ans")")
+				mkdir -pv "$dir"
+				file=$(realpath "$ans")
+
+				if [ "$exist" -eq "0" ]; then
+					[ "$?" -ne "0" ] || [ -z "$file" ] || [ -e "$file" ]
+				else
+					[ "$?" -ne "0" ] || [ -z "$file" ]
+				fi
+			fi
+
+			if [ "$?" -eq "0" ]; then
+				echo "Invalid path $ans"
+			else
+				eval "$1=$file"
+				break
+			fi
+		fi
+	done
+}
+
+read_ident name "Name of the new VM"
+read_num cpu "CPU counts"
+read_num mem "Memory size (MB)"
+read_num disk "Disk size (GB)"
+
+echo
+
+read_str os "OS variant (Run 'osinfo-query os' to see a list)"
+read_path iso "Install media (.iso) path" 1
+read_path path "VM disk image (.qcow2) path" 0
+
+echo
+
+echo "Creating VM:"
+echo "- Name: $name"
+echo "- CPU: $cpu vCPU"
+echo "- Memory: $mem MB"
+echo "- Disk: $disk GB"
+echo
+echo "- Installing: $os"
+echo "- Install from: $iso"
+echo "- Install to: $path"
+
+echo
+
+do_confirm _discard "Proceed to installation?"
+
+echo
+
+echo "VNC Port is 5959"
+
+echo
+
+sudo virt-install --virt-type=kvm --hvm --name="$name" --vcpus="$cpu" --cpu host-passthrough --ram="$mem" --os-variant="$os" --disk path="$path",size="$disk",bus=virtio,format=qcow2 --cdrom="$iso" --network=default,model=virtio --graphics vnc,port=5959,listen=0.0.0.0 --console pty,target_type=serial --boot kernel=mnt/casper/vmlinuz,initrd=mnt/casper/initrd,kernel_args="console=ttyS0"
