@@ -195,6 +195,11 @@ function install_bat {
 	install_file "bat" "config" "$HOME/.config/bat/config"
 }
 
+function install_moar {
+	sudo wget -O /usr/local/bin/moar https://github.com/walles/moar/releases/download/v1.21.0/moar-v1.21.0-linux-386
+	sudo chmod +x /usr/local/bin/moar
+}
+
 function install_tmux {
 	# TMUX configuration for myself, depends on bash_conf to auto-start
 	sudo apt-get update

@@ -2,6 +2,7 @@
 # a command-line option that you want to pass to `bat` by default. You can
 # run `bat --help` to get a list of all possible configuration options.
 
---tabs 0
 --italic-text always
+--style=plain
+--tabs 0
 --theme="ansi"

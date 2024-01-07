@@ -15,6 +15,6 @@ trap '__error_handing $? $LINENO' ERR
 # file locator
 SCRIPT_DIR=$(dirname "$(realpath -e "${BASH_SOURCE[0]:-$0}")")
 
-"$SCRIPT_DIR/install.sh" core kernbuild checkinstall dotnet micro ripgrep delta bat tmux bash_conf gdb_conf grub_conf ssh_conf kcompile
+"$SCRIPT_DIR/install.sh" core kernbuild checkinstall dotnet micro ripgrep delta bat moar tmux bash_conf gdb_conf grub_conf ssh_conf kcompile
 
 # "$SCRIPT_DIR/install.sh" xonsh

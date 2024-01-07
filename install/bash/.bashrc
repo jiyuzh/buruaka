@@ -80,7 +80,7 @@ alias ggg='____cdls_history'
 
 alias vi='micro'
 alias grep='rg'
-alias cat='bat'
+alias cat='bat --paging=never'
 alias diff='____diff'
 
 # Better history
@@ -162,6 +162,8 @@ export TZ="America/Chicago"
 
 # Modernize LESS
 export LESS='--quiet --quit-if-one-screen --ignore-case --tabs=4 --mouse --wheel-lines=3 --RAW-CONTROL-CHARS'
+export MOAR='-quit-if-one-screen -render-unprintable highlight -style rainbow_dash -wrap'
+export PAGER='moar'
 
 # TMUX
 if [[ -z "$TMUX" ]] && [[ -n "$SSH_CONNECTION" ]]; then
