@@ -256,6 +256,9 @@ function install_gdb_conf {
 	sudo apt-get install -y gdb
 
 	install_file "gdb" ".gdbinit" "$HOME/.gdbinit"
+
+	wget -O ~/.gdb-dashboard https://git.io/.gdbinit
+	pip install pygments
 }
 
 function install_grub_conf {
