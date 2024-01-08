@@ -55,7 +55,7 @@ function read_num {
 	while :; do
 		read -p "$2 " ans
 
-		if echo "$ans" | regex '^\d+$'; then
+		if echo "$ans" | regex '^\d+$' &>/dev/null; then
 			eval "$1=$ans"
 			break
 		fi
@@ -77,7 +77,7 @@ function read_ident {
 	while :; do
 		read -p "$2 " ans
 
-		if echo "$ans" | regex '^[a-zA-Z]\w*$'; then
+		if echo "$ans" | regex '^[a-zA-Z]\w*$' &>/dev/null; then
 			eval "$1=$ans"
 			break
 		fi
@@ -97,7 +97,7 @@ function read_ident {
 # Example: read_str content "Content of the file?"
 function read_str {
 	while :; do
-		read -p "$2 " ans
+		read -p "$2: " ans
 
 		if [ -z "$ans" ]; then
 			echo "Please answer a string."
@@ -133,20 +133,20 @@ function read_path {
 			if [ "$exist" -eq "1" ]; then
 				file=$(realpath -e "$ans")
 
-				[ "$?" -ne "0" ] || [ -z "$file" ] || [ ! -e "$file" ]
+				[ "$?" -eq "0" ] && [ ! -z "$file" ] && [ -e "$file" ]
 			else
 				dir=$(dirname "$(realpath "$ans")")
 				mkdir -pv "$dir"
 				file=$(realpath "$ans")
 
 				if [ "$exist" -eq "0" ]; then
-					[ "$?" -ne "0" ] || [ -z "$file" ] || [ -e "$file" ]
+					[ "$?" -eq "0" ] && [ ! -z "$file" ] && [ ! -e "$file" ]
 				else
-					[ "$?" -ne "0" ] || [ -z "$file" ]
+					[ "$?" -eq "0" ] && [ ! -z "$file" ]
 				fi
 			fi
 
-			if [ "$?" -eq "0" ]; then
+			if [ "$?" -ne "0" ]; then
 				echo "Invalid path $ans"
 			else
 				eval "$1=$file"

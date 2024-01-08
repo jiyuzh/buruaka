@@ -77,7 +77,7 @@ function install_core {
 	sudo apt-get update
 	sudo apt-get install -y apt-transport-https
 	sudo apt-get update
-	sudo apt-get install -y bash curl git man perl sudo wget screen vim nano software-properties-common zip unzip tar
+	sudo apt-get install -y bash curl git man perl sudo wget screen vim nano software-properties-common zip unzip tar rsync
 	sudo apt-get install -y python3 python3-dev python3-pip python3-venv python3-userpath
 	python3 -m userpath append ~/.local/bin
 }

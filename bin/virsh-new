@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 function do_confirm {
 	while :; do
 		read -p "$2 (y/n) " yn
@@ -23,7 +25,7 @@ function read_num {
 	while :; do
 		read -p "$2: " ans
 
-		if echo "$ans" | regex '^\d+$'; then
+		if echo "$ans" | regex '^\d+$' &>/dev/null; then
 			eval "$1=$ans"
 			break
 		fi
@@ -36,7 +38,7 @@ function read_ident {
 	while :; do
 		read -p "$2: " ans
 
-		if echo "$ans" | regex '^[a-zA-Z]\w*$'; then
+		if echo "$ans" | regex '^[a-zA-Z]\w*$' &>/dev/null; then
 			eval "$1=$ans"
 			break
 		fi
@@ -47,7 +49,7 @@ function read_ident {
 
 function read_str {
 	while :; do
-		read -p "$2 " ans
+		read -p "$2: " ans
 
 		if [ -z "$ans" ]; then
 			echo "Please answer a string."
@@ -70,20 +72,20 @@ function read_path {
 			if [ "$exist" -eq "1" ]; then
 				file=$(realpath -e "$ans")
 
-				[ "$?" -ne "0" ] || [ -z "$file" ] || [ ! -e "$file" ]
+				[ "$?" -eq "0" ] && [ ! -z "$file" ] && [ -e "$file" ]
 			else
 				dir=$(dirname "$(realpath "$ans")")
 				mkdir -pv "$dir"
 				file=$(realpath "$ans")
 
 				if [ "$exist" -eq "0" ]; then
-					[ "$?" -ne "0" ] || [ -z "$file" ] || [ -e "$file" ]
+					[ "$?" -eq "0" ] && [ ! -z "$file" ] && [ ! -e "$file" ]
 				else
-					[ "$?" -ne "0" ] || [ -z "$file" ]
+					[ "$?" -eq "0" ] && [ ! -z "$file" ]
 				fi
 			fi
 
-			if [ "$?" -eq "0" ]; then
+			if [ "$?" -ne "0" ]; then
 				echo "Invalid path $ans"
 			else
 				eval "$1=$file"
@@ -118,12 +120,56 @@ echo "- Install to: $path"
 
 echo
 
+# Create a directory to mount ISO
+rootdir=$(sudo mktemp -d "/tmp/live-iso.XXXXXXXX")
+if [ "$?" -ne 0 ]; then
+	echo "Unable to allocate temp directory"
+	exit 1
+fi
+
+# Mount ISO
+sudo mount -o loop "$iso" "$rootdir"
+if [ "$?" -ne 0 ]; then
+	echo "Unable to mount $iso"
+	exit 1
+fi
+
+# Ubuntu virt-manager has bug
+git clone --depth=1 https://github.com/virt-manager/virt-manager virt-manager-virsh-new
+cd virt-manager-virsh-new
+if [ ! -f "./virt-install" ]; then
+	echo "Failed to fetch the latest version of virt-manager from https://github.com/virt-manager/virt-manager"
+	exit 1
+fi
+
+# The command train
+cmdline="sudo ./virt-install --virt-type kvm --hvm --name \"$name\" --vcpus \"$cpu\" --cpu host-passthrough --memory \"$mem\" --os-variant \"$os\" --disk path=\"$path\",size=\"$disk\",bus=virtio,format=qcow2 --cdrom \"$iso\" --network default,model=virtio --graphics none --console pty,target_type=serial --boot kernel="$rootdir/casper/vmlinuz",initrd="$rootdir/casper/initrd",kernel_args=\"console=ttyS0\" --qemu-commandline=\"-s\""
+
+echo
+
+echo "The following command will be run:"
+echo "$cmdline"
+
+echo
+
+echo "The Escape sequence is: Ctrl + ]"
+echo "Note:"
+echo "    1. After installation, you must remove <kernel>, <initrd> and <cmdline> line from the <os> section of Virsh XML config"
+echo "    2. Otherwise, you will receive a message: 'can't open /dev/sr0: No medium found'"
+
+echo
+
 do_confirm _discard "Proceed to installation?"
 
 echo
 
-echo "VNC Port is 5959"
+eval "$cmdline"
 
-echo
+sudo virsh destroy "$name"
+sudo virsh edit "$name"
 
-sudo virt-install --virt-type=kvm --hvm --name="$name" --vcpus="$cpu" --cpu host-passthrough --ram="$mem" --os-variant="$os" --disk path="$path",size="$disk",bus=virtio,format=qcow2 --cdrom="$iso" --network=default,model=virtio --graphics vnc,port=5959,listen=0.0.0.0 --console pty,target_type=serial --boot kernel=mnt/casper/vmlinuz,initrd=mnt/casper/initrd,kernel_args="console=ttyS0"
+# Cleanup
+cd ..
+sudo umount "$rootdir"
+sudo rm -rf "$rootdir"
+sudo rm -rf "./virt-manager-virsh-new"
