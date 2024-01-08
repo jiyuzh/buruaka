@@ -304,6 +304,9 @@ END
 
 	pip3 install ssh-import-id
 	ssh-import-id gh:jiyuzh
+
+	# Now we can use ssh auth for buruaka repo
+	"$SCRIPT_DIR/bin/fixup-buruaka"
 }
 
 function install_kcompile {
