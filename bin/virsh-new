@@ -156,6 +156,7 @@ echo "The Escape sequence is: Ctrl + ]"
 echo "Note:"
 echo "    1. After installation, you must remove <kernel>, <initrd> and <cmdline> line from the <os> section of Virsh XML config"
 echo "    2. Otherwise, you will receive a message: 'can't open /dev/sr0: No medium found'"
+echo "    3. You may add VNC display, or enable serial mode of GRUB after installation"
 
 echo
 

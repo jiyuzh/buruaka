@@ -321,7 +321,7 @@ function install_kcompile {
 help_mode=0
 help_at=""
 
-avail_install=($(declare -F | regex 'install_(\w+)$' '$1\n'))
+avail_install=($(declare -F | "$SCRIPT_DIR/bin/regex" 'install_(\w+)$' '$1\n'))
 
 for var in "$@"; do
 	help_mode=1
