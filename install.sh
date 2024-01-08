@@ -244,7 +244,7 @@ function install_gdb_conf {
 	deploy_file "gdb" ".gdbinit" "$HOME/.gdbinit"
 
 	wget -O ~/.gdb-dashboard https://git.io/.gdbinit
-	pip install pygments
+	pip3 install pygments
 }
 
 function install_grub_conf {
@@ -300,9 +300,9 @@ END
 		nano "$HOME/.ssh/id_ed25519_unsafe"
 	fi
 
-	chmod 600 "$HOME/.ssh/*"
+	chmod 600 "$HOME/.ssh/"*
 
-	sudo pip3 install ssh-import-id
+	pip3 install ssh-import-id
 	ssh-import-id gh:jiyuzh
 }
 

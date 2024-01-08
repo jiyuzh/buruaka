@@ -166,7 +166,7 @@ export MOAR='-quit-if-one-screen -render-unprintable highlight -style rainbow_da
 export PAGER='moar'
 
 # TMUX
-if [[ -z "$TMUX" ]] && [[ -n "$SSH_CONNECTION" ]]; then
+if [[ -z "$TMUX" ]] && [[ -n "$SSH_CONNECTION" ]] && [[ -f "$HOME/.tmux.conf.local" ]]; then
 	tmux attach-session -t ssh-tmux-jz || tmux new-session -s ssh-tmux-jz
 fi
 
