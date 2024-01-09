@@ -1,12 +1,5 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
-module=`ls -t *.ko | head -n 1`
+SCRIPT_DIR=$(dirname "$(realpath -e "${BASH_SOURCE[0]:-$0}")")
 
-if [ ! -z "$module" ]; then
-	if [ -f "$module" ]; then
-		echo
-		echo "Installing module $module"
-		echo
-		sudo insmod "$module"
-	fi
-fi
+"$SCRIPT_DIR/kernel-compile/modinstall.sh" "$@"
