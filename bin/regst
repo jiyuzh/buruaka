@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+if [ "$#" -lt 2 ]; then
+	echo "regst [PCRE pattern] [PCRE output format] [[PCRE match option]]"
+	echo ""
+	echo "To test your regex: https://regex101.com/"
+	echo "To learn output variables: https://perldoc.perl.org/variables"
+	echo ""
+	echo "Detail:"
+	echo "    regst [PCRE pattern] [PCRE output format]"
+	echo "        Performs string replacement based on the given pattern"
+	echo "        Equivalent to: regst [PCRE pattern] [PCRE output format] '/g'"
+	echo ""
+	echo "Note:"
+	echo "    1. The match is done line-by-line, hence /m (multiline mode) is implied"
+	echo "    2. \$0 means the entire match (alias of \$&) in this implementation as the author likes C#"
+	echo "    3. The first character of match option is used as the pattern delimitor"
+	exit 2
+fi
+
+pat="$1"
+opt="/g"
+fmt="$2"
+
+# Use $0 for match the result itself
+fmt=$(echo "$fmt" | perl -pe 's/\$0/\$\&/g')
+
+if [ "$#" -ge 3 ]; then
+	opt="$3"
+fi
+
+sep=${opt:0:1}
+opt=${opt:1}
+
+perl -pe "s$sep$pat$sep$fmt$sep$opt"

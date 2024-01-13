@@ -10,25 +10,26 @@ if [ "$#" -lt 1 ]; then
 	echo "    regex [PCRE pattern]"
 	echo "        Print matched lines containing the given pattern"
 	echo "        Each line is printed only once"
-	echo "        Equivalent to: regex [PCRE pattern] '\$_' ''"
+	echo "        Equivalent to: regex [PCRE pattern] '\$_' '/'"
 	echo ""
 	echo "    regex [PCRE pattern] [PCRE output format]"
 	echo "        Print matched contents containing the given pattern"
 	echo "        Every match in line will be printed"
-	echo "        Equivalent to: regex [PCRE pattern] [PCRE output format] 'g'"
+	echo "        Equivalent to: regex [PCRE pattern] [PCRE output format] '/g'"
 	echo ""
 	echo "Note:"
 	echo "    1. The match is done line-by-line, hence /m (multiline mode) is implied"
 	echo "    2. \$0 means the entire match (alias of \$&) in this implementation as the author likes C#"
+	echo "    3. The first character of match option is used as the pattern delimitor"
 	exit 2
 fi
 
 pat="$1"
 fmt="\$_"
-opt=""
+opt="/"
 
 if [ "$#" -ge 2 ]; then
-	opt="g"
+	opt="/g"
 	fmt="$2"
 
 	# Use $0 for match the result itself
@@ -39,11 +40,15 @@ if [ "$#" -ge 3 ]; then
 	opt="$3"
 fi
 
+sep=${opt:0:1}
+opt=${opt:1}
+kw="if"
+
 # The g checking part is to prevent infinite loop
 if [[ "$opt" == *"g"* ]]; then
-	# The "Eskimo kiss" }{ closes the while loop (which is implied by -n)
-	# See https://superuser.com/questions/848315/make-perl-regex-search-exit-with-failure-if-not-found
-	perl -ne 'while (/'"$pat"'/'"$opt"') { print "'"$fmt"'"; $found ||= 1; } }{ exit 1 if !$found'
-else
-	perl -ne 'if (/'"$pat"'/'"$opt"') { print "'"$fmt"'"; $found ||= 1; } }{ exit 1 if !$found'
+	kw="while"
 fi
+
+# The "Eskimo kiss" }{ closes the while loop (which is implied by -n)
+# See https://superuser.com/questions/848315/make-perl-regex-search-exit-with-failure-if-not-found
+perl -ne "$kw (m$sep$pat$sep$opt) { print $fmt; \$found ||= 1; } }{ exit 1 if !\$found"
