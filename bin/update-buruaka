@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+SCRIPT_DIR=$(dirname "$(realpath -e "${BASH_SOURCE[0]:-$0}")")
+
+cd "$SCRIPT_DIR"
+pushd ..
+
+git pull
+git push
+
+popd
+
+if [ ! -d "./kernel-compile" ]; then
+	exit 0
+fi
+
+cd "./kernel-compile"
+
+git pull
+git push
