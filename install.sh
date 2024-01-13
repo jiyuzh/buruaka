@@ -312,7 +312,7 @@ END
 function install_kcompile {
 	pushd "$SCRIPT_DIR/bin/"
 	if sudo test ! -e "$SCRIPT_DIR/bin/kernel-compile"; then
-		git clone github.deanon:jiyuzh/kernel-compile.git
+		git clone https://github.com/jiyuzh/kernel-compile.git
 	fi
 
 	pushd "$SCRIPT_DIR/bin/kernel-compile/"

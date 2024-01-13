@@ -3,6 +3,15 @@
 SCRIPT_DIR=$(dirname "$(realpath -e "${BASH_SOURCE[0]:-$0}")")
 
 cd "$SCRIPT_DIR"
-cd ..
 
+pushd ..
 git remote set-url origin github.deanon:jiyuzh/buruaka.git
+popd
+
+if [ ! -d "./kernel-compile" ]; then
+	exit 0
+fi
+
+pushd "./kernel-compile"
+git remote set-url origin github.deanon:jiyuzh/kernel-compile.git
+popd

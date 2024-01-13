@@ -3,10 +3,14 @@
 SCRIPT_DIR=$(dirname "$(realpath -e "${BASH_SOURCE[0]:-$0}")")
 
 cd "$SCRIPT_DIR"
+
 pushd ..
 
 git pull
-git push
+
+if git remote get-url origin | grep -q 'github.deanon:'; then
+	git push
+fi
 
 popd
 
@@ -14,7 +18,12 @@ if [ ! -d "./kernel-compile" ]; then
 	exit 0
 fi
 
-cd "./kernel-compile"
+pushd "./kernel-compile"
 
 git pull
-git push
+
+if git remote get-url origin | grep -q 'github.deanon:'; then
+	git push
+fi
+
+popd
