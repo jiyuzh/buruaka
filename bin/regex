@@ -51,4 +51,4 @@ fi
 
 # The "Eskimo kiss" }{ closes the while loop (which is implied by -n)
 # See https://superuser.com/questions/848315/make-perl-regex-search-exit-with-failure-if-not-found
-perl -ne "$kw (m$sep$pat$sep$opt) { print $fmt; \$found ||= 1; } }{ exit 1 if !\$found"
+perl -ne "$kw (m$sep$pat$sep$opt) { print \"$fmt\"; \$found ||= 1; } }{ exit 1 if !\$found"
