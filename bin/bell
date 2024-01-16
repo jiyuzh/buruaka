@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+printf '\a'
+sleep 1
+printf '\a'
