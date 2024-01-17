@@ -16,10 +16,10 @@ sub help
 
 	my $prog = basename($0);
 	print(
-		"grub-continue v1.0.0\n" .
+		"grub-next v1.0.0\n" .
 		"Jiyuan Zhang <jiyuanz3\@illinois.edu>\n" .
 		"\n" .
-		"grub-continue is a wrapper around grub-reboot which let you filter desired boot\n" .
+		"grub-next is a wrapper around grub-reboot which let you filter desired boot\n" .
 		"entries and set is as the target of next boot.\n" .
 		"\n" .
 		"USAGE:\n" .
