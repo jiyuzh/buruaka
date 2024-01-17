@@ -57,6 +57,9 @@ sub help
 		"    -l, --list\n" .
 		"        List all bootable entries.\n" .
 		"\n" .
+		"    -p, --persistent\n" .
+		"        The boot entry choice shall be preserved across multiple reboot.\n" .
+		"\n" .
 		"    -s, --show\n" .
 		"        Display the content of the selected boot entry and quit without changing\n". 
 		"        system settings.\n" .
@@ -219,17 +222,14 @@ sub showGrubBoot
 
 sub selectGrubBoot
 {
-	my ($verbose, $path, $dryrun, $tmp) = @_;
+	my ($verbose, $path, $persistent, $dryrun, $tmp) = @_;
 
 	my @entry = @$tmp;
 	my $fqn = $entry[1];
 	my $output = "";
-	my $ret = $?;
+	my $ret = 0;
 
-	if ($dryrun == 0) {
-		$output = `grub-reboot '$fqn' 2>&1`;
-	}
-	else {
+	if ($dryrun != 0) {
 		print("\n") if ($verbose >= 1);
 		print("Dry run boot entry is: " . strGrubEntry(@entry) . "\n");
 
@@ -237,6 +237,15 @@ sub selectGrubBoot
 		print("Current active boot entry is: $real\n");
 		return 0;
 	}
+
+	if ($persistent == 0) {
+		$output = `grub-reboot '$fqn' 2>&1`;
+	}
+	else {
+		$output = `grub-set-default '$fqn' 2>&1`;
+	}
+
+	$ret = $?;
 
 	my $real = probeGrubEntry($verbose, $path);
 
@@ -249,7 +258,7 @@ sub selectGrubBoot
 			return 0;
 		}
 		else {
-			print("Failed to set boot entry to: " . strGrubEntry(@entry) . "\n");
+			print("Unable to set boot entry to: " . strGrubEntry(@entry) . "\n");
 			print("Current active boot entry is: $real\n");
 			return 1;
 		}
@@ -290,12 +299,12 @@ sub probeGrubEntry
 GetOptions(
 	'help|?' => \&help,
 
-	'list!' => \(my $listmode = 0),
-
 	'current!' => \(my $current = 0),
 	'dryrun!' => \(my $dryrun = 0),
 	'grubfile=i' => \(my $grub = "/boot/grub/grub.cfg"),
 	'index|offset=i' => \(my $index = 0),
+	'list!' => \(my $listmode = 0),
+	'persistent!' => \(my $persistent = 0),
 	'show!' => \(my $detail = 0),
 	'verbose+' => \(my $verbose = 0),
 ) or help(0);
@@ -342,7 +351,7 @@ if ($detail) {
 	showGrubBoot($verbose, $grub, $result[$index]);
 }
 else {
-	$ret = selectGrubBoot($verbose, $grub, $dryrun, $result[$index]);
+	$ret = selectGrubBoot($verbose, $grub, $persistent, $dryrun, $result[$index]);
 }
 
 exit $ret;
