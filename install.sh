@@ -252,20 +252,19 @@ function install_grub_conf {
 	#   Allow kernel selection
 	#   Remember last selected entry
 	#   Disable KASLR (for KGDB)
+	TS=`date '+%F-%s'`
+
 	if sudo test ! -e "/etc/default/grub"; then
 		sudo mkdir -vp "/etc/default/"
 		sudo touch "/etc/default/grub"
 	fi
 
 	if sudo test -e "/etc/default/grub"; then
-		TS=`date '+%F-%s'`
 		move_path "/etc/default/grub" "/etc/default/grub.bak.$TS" 1 1
 	fi
 
-	if sudo test -f "/etc/grub.d/10_linux"; then
-		TS=`date '+%F-%s'`
-		copy_path "/etc/grub.d/10_linux" "/etc/grub.d/10_linux.bak.$TS" 1 1
-		sudo chmod -x "/etc/grub.d/10_linux.bak.$TS"
+	if sudo test -f "/etc/grub.d/10_linux"; then`
+		copy_path "/etc/grub.d/10_linux" "$SCRIPT_DIR/reflect/grub/10_linux.bak.$TS" 1 1
 		sudo patch -l /etc/grub.d/10_linux $SCRIPT_DIR/install/grub/10_linux.patch
 	fi
 
