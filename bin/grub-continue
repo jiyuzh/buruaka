@@ -230,7 +230,11 @@ sub selectGrubBoot
 		$output = `grub-reboot '$fqn' 2>&1`;
 	}
 	else {
-		print("\nDecided boot entry: " . strGrubEntry(@entry) . "\n");
+		print("\n") if ($verbose >= 1);
+		print("Dry run boot entry is: " . strGrubEntry(@entry) . "\n");
+
+		my $real = probeGrubEntry($verbose, $path);
+		print("Current active boot entry is: $real\n");
 		return 0;
 	}
 
