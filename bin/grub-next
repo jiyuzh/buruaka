@@ -31,7 +31,7 @@ sub help
 		"    <PATTERN>\n" .
 		"        A regular expression used for searching. To match a pattern beginning\n" .
 		"        with a dash, use the special '--' delimiter to indicate that no more\n" .
-		"        flags will be provided." .
+		"        flags will be provided.\n" .
 		"\n" .
 		"OPTIONS:\n" .
 		"    -c, --current\n" .

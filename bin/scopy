@@ -1,0 +1,190 @@
+#!/usr/bin/env perl
+
+use warnings;
+use strict;
+
+use POSIX;
+use File::Basename;
+use Data::Dumper;
+use Getopt::Long;
+use MIME::Base64;
+use Term::ReadLine;
+
+my $SCRIPT_DIR = dirname(__FILE__);
+my $MAX_OSC52_LENGTH = 100000;
+my $MAX_SCREEN_LENGTH = 768;
+
+sub help
+{
+	my ($exitval) = @_;
+
+	my $prog = basename($0);
+	print(
+		"ssh-copy v1.0.0\n" .
+		"Jiyuan Zhang <jiyuanz3\@illinois.edu>\n" .
+		"\n" .
+		"ssh-copy is a OSC 52 clipboard writer which supports text auto fragmentation.\n" .
+		"\n" .
+		"Note that this program will buffer ALL outputs before sending. Do NOT use it for\n" .
+		"long running processes or gigantic blob of text\n" .
+		"\n" .
+		"USAGE:\n" .
+		"    $prog [OPTIONS] FILE\n" .
+		"    COMMAND | $prog [OPTIONS]\n" .
+		"\n" .
+		"ARGS:\n" .
+		"    <FILE>\n" .
+		"        A file to read copying data from.\n" .
+		"\n" .
+		"    <COMMAND>\n" .
+		"        A command to pipe copying data from.\n" .
+		"\n" .
+		"OPTIONS:\n" .
+		"    -h, -?, --help\n" .
+		"        Show this help.\n" .
+		"\n"
+	);
+
+	exit $exitval;
+}
+
+sub computeLimit
+{
+	my $osc52Overhead = 8;
+	my $tmuxOverhead = 10;
+	my $screenOverhead = ceil($MAX_OSC52_LENGTH / $MAX_SCREEN_LENGTH) * 4;
+	my $safeguard = 16;
+
+	my $fixedOverhead = $osc52Overhead + $tmuxOverhead + $screenOverhead + $safeguard;
+	my $allowance = $MAX_OSC52_LENGTH - $fixedOverhead;
+
+	return floor($allowance / 4 * 3);
+}
+
+sub readAllText
+{
+	my ($path) = @_;
+
+	open my $fd, $path or die "Could not open $path: $!\n";
+	my $text = do { local $/; <$fd> };
+	close($fd);
+
+	return $text;
+}
+
+sub copyTmux
+{
+	my ($seq) = @_;
+
+	print("\x1bPtmux;\x1b$seq\x1b\\");
+}
+
+sub copyScreen
+{
+	my ($seq) = @_;
+
+	# Screen limits the length of string sequences, so we have to break it up
+	# We go 4 bytes under the limit because we're going to insert escapers
+	my $limit = $MAX_SCREEN_LENGTH - 4;
+	$seq =~ s/.{$limit}/$&\n/gm;
+	$seq =~ s/^/\x1bP/gm;
+	$seq =~ s/$/\x1b\\/gm;
+	$seq =~ s/\n//gm;
+
+	print($seq);
+}
+
+sub copyOther
+{
+	my ($seq) = @_;
+
+	print($seq);
+}
+
+sub copyCore
+{
+	my ($txt) = @_;
+
+	my $enc = encode_base64($txt, "");
+	my $seq = "\x1b]52;c;$enc\a";
+
+	if ($ENV{TERM} =~ /\btmux\b/) {
+		copyTmux($seq);
+	}
+	elsif ($ENV{TERM} =~ /\bscreen\b/) {
+		if ($ENV{TMUX} =~ /./) {
+			copyTmux($seq);
+		}
+		else {
+			copyScreen($seq);
+		}
+	}
+	else {
+		copyOther($seq);
+	}
+}
+
+sub copyAll
+{
+	my ($txt, $limit) = @_;
+
+	my $len = length($txt);
+	if ($len < $limit) {
+		copyCore($txt);
+
+		print("Text sent to clipboard.\n");
+
+		return 0;
+	}
+
+	my $term = Term::ReadLine->new('term');
+	my @_IO = $term->findConsole();
+	my $_IN = $_IO[0];
+	open my $TTY, '<', $_IN or die "Could not open terminal $_IN: $!\n";
+
+	my $pos = 0;
+	my $part = 1;
+	my $parts = ceil($len / $limit);
+	while ($pos < $len) {
+		my $frag = substr($txt, $pos, $limit);
+
+		copyCore($frag);
+
+		if ($part < $parts) {
+			print("Part $part/$parts sent to clipboard. Hit Enter to send next part.\n");
+			<$TTY>;
+		}
+		else {
+			print("Part $part/$parts sent to clipboard. All parts sent.\n");
+			last;
+		}
+
+		$pos += $limit;
+		$part += 1;
+	}
+
+	close $TTY;
+	return 0;
+}
+
+my $str = "";
+
+GetOptions(
+	'help|?' => \&help,
+) or help(0);
+
+if (scalar(@ARGV) == 1) {
+	$str = readAllText($ARGV[0]);
+}
+elsif (! -t STDIN) {
+	$str = do { local $/; <STDIN> };
+	close STDIN;
+}
+else {
+	help(1);
+}
+
+my $limit = computeLimit();
+copyAll($str, $limit);
+
+exit 0;
