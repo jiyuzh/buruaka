@@ -1,0 +1,344 @@
+#!/usr/bin/env perl
+
+use warnings;
+use strict;
+
+use File::Basename;
+use Data::Dumper;
+use Getopt::Long;
+use Pod::Usage;
+
+my $SCRIPT_DIR = dirname(__FILE__);
+
+sub help
+{
+	my ($exitval) = @_;
+
+	my $prog = basename($0);
+	print(
+		"grub-continue v1.0.0\n" .
+		"Jiyuan Zhang <jiyuanz3\@illinois.edu>\n" .
+		"\n" .
+		"grub-continue is a wrapper around grub-reboot which let you filter desired boot\n" .
+		"entries and set is as the target of next boot.\n" .
+		"\n" .
+		"USAGE:\n" .
+		"    $prog [OPTIONS] PATTERN [--list]\n" .
+		"    $prog [OPTIONS] --current\n" .
+		"    $prog [OPTIONS] --list\n" .
+		"\n" .
+		"ARGS:\n" .
+		"    <PATTERN>\n" .
+		"        A regular expression used for searching. To match a pattern beginning\n" .
+		"        with a dash, use the special '--' delimiter to indicate that no more\n" .
+		"        flags will be provided." .
+		"\n" .
+		"OPTIONS:\n" .
+		"    -c, --current\n" .
+		"        Display the active boot entry and quit.\n" .
+		"\n" .
+		"    -d, --dryrun\n" .
+		"        Run the program without changing system setting.\n" .
+		"\n" .
+		"    -g, --grub, --grubfile <PATH>\n" .
+		"        Specify the grub config file to work with.\n" .
+		"\n" .
+		"        The default value is: /boot/grub/grub.cfg\n" .
+		"\n" .
+		"    -h, -?, --help\n" .
+		"        Show this help.\n" .
+		"\n" .
+		"    -i, --index, --offset <INDEX>\n" .
+		"        When multiple bootable entries matches the pattern, the entry listed at\n" .
+		"        the specified index will be selected.\n" .
+		"\n" .
+		"        The default value is: 0\n" .
+		"\n" .
+		"    -l, --list\n" .
+		"        List all bootable entries.\n" .
+		"\n" .
+		"    -s, --show\n" .
+		"        Display the content of the selected boot entry and quit without changing\n". 
+		"        system settings.\n" .
+		"\n" .
+		"    -v, -vv\n" .
+		"        Change the verbosity of the program output.\n". 
+		"\n"
+	);
+
+	exit $exitval;
+}
+
+sub parseGrubCfg
+{
+	my ($verbose, $path) = @_;
+
+	my @idstack;
+	my @smstack;
+	my @ofstack;
+	my @result;
+	my $cursor = "ERR_SUBMENU_NULL";
+	my $submenu = "! Unknown submenu entry !";
+	my $offset = 0;
+
+	print("Parsing GRUB config file: $path") if ($verbose >= 1);
+
+	open my $grub_fh, $path or die "Could not open $path: $!\n";
+	my $grub_text = do { local $/; <$grub_fh> };
+	close($grub_fh);
+
+	my $prev = 0;
+
+	while ($grub_text =~ /^\s*(?P<class>menuentry|submenu)\s+'(?P<name>[^']+)'\s+[^']+\s+'(?P<id>[^']+)'\s/gm) {
+		my $class = $+{class};
+		my $name = $+{name};
+		my $id = $+{id};
+
+		my $prefix = substr($grub_text, $prev, $-[0] - $prev);
+		$prev = $+[0];
+
+		foreach my $char (split('', $prefix)) {
+			if ($char eq '{') {
+				push(@idstack, $cursor);
+				$cursor = "ERR_SUBMENU_NULL";
+				push(@smstack, $submenu);
+				$submenu = "! Unknown submenu entry !";
+				push(@ofstack, $offset);
+				$offset = 0;
+			}
+			if ($char eq '}') {
+				$cursor = pop(@idstack);
+				$submenu = pop(@smstack);
+				$offset = pop(@ofstack);
+			}
+		}
+
+		if ($class eq "submenu") {
+			$cursor = $id;
+			$submenu = $name;
+			next;
+		}
+
+		if ($class eq "menuentry") {
+			my @ids = @idstack;
+			push(@ids, $id);
+			my $fqn = join('>', @ids);
+
+			my @sms = @smstack;
+			push(@sms, $name);
+			my $smn = join(' -> ', @sms);
+
+			my @ofs = @ofstack;
+			push(@ofs, $offset);
+			my $ofn = join('>', @ofs);
+
+			my @entry = ($smn, $fqn, $ofn, $-[0]);
+			push(@result, \@entry);
+		}
+
+		$offset++;
+	}
+
+	print(" -> Loaded " . scalar(@result) . " bootable entries\n") if ($verbose >= 1);
+
+	return @result;
+}
+
+sub strGrubEntry
+{
+	my (@entry) = @_;
+	return "[$entry[2]] $entry[0]";
+}
+
+sub listGrubEntry
+{
+	my ($verbose, @entries) = @_;
+	my $idx = 0;
+
+	print("\n") if ($verbose >= 1);
+
+	foreach my $tmp (@entries) {
+		my @entry = @$tmp;
+		print("$idx. " . strGrubEntry(@entry) . "\n");
+		$idx++;
+	}
+}
+
+sub filterGrubEntry
+{
+	my ($verbose, $pattern, @entries) = @_;
+
+	print("Filtering entries with PCRE pattern: /$pattern/gm") if ($verbose >= 1);
+
+	my @result;
+
+	foreach my $tmp (@entries) {
+		my @entry = @$tmp;
+
+		if ($entry[0] =~ /$pattern/gm || $entry[1] =~ /$pattern/gm) {
+			push(@result, \@entry);
+		}
+	}
+
+	print(" -> Gathered " . scalar(@result) . " bootable entries.\n") if ($verbose >= 1);
+
+	listGrubEntry(@result) if ($verbose >= 2);
+
+	return @result;
+}
+
+sub showGrubBoot
+{
+	my ($verbose, $path, $tmp) = @_;
+
+	my @entry = @$tmp;
+	my $balance = 0;
+
+	open my $grub_fh, $path or die "Could not open $path: $!\n";
+	my $grub_text = do { local $/; <$grub_fh> };
+	close($grub_fh);
+
+	my $text = "";
+
+	foreach my $char (split('', substr($grub_text, $entry[3]))) {
+		$text .= $char;
+
+		if ($char eq '{') {
+			$balance++;
+		}
+		if ($char eq '}') {
+			$balance--;
+			if ($balance <= 0) {
+				last;
+			}
+		}
+	}
+
+	print($text);
+}
+
+sub selectGrubBoot
+{
+	my ($verbose, $path, $dryrun, $tmp) = @_;
+
+	my @entry = @$tmp;
+	my $fqn = $entry[1];
+	my $output = "";
+	my $ret = $?;
+
+	if ($dryrun == 0) {
+		$output = `grub-reboot '$fqn' 2>&1`;
+	}
+	else {
+		print("\nDecided boot entry: " . strGrubEntry(@entry) . "\n");
+		return 0;
+	}
+
+	my $real = probeGrubEntry($verbose, $path);
+
+	if ($ret == 0 && $output eq "") {
+		print("\n") if ($verbose >= 1);
+
+		if ($real eq $entry[1]) {
+			print("Set boot entry to: " . strGrubEntry(@entry) . "\n");
+			print("Current active boot entry is: $real\n");
+			return 0;
+		}
+		else {
+			print("Failed to set boot entry to: " . strGrubEntry(@entry) . "\n");
+			print("Current active boot entry is: $real\n");
+			return 1;
+		}
+	}
+	else {
+		print("\n") if ($verbose >= 1);
+		print($output);
+		print("\n");
+		print("Failed to set boot entry to: " . strGrubEntry(@entry) . "\n");
+		print("Current active boot entry is: $real\n");
+		return 1;
+	}
+}
+
+sub probeGrubEntry
+{
+	my ($verbose, $path) = @_;
+
+	$path = dirname($path) . "/grubenv";
+
+	print("Checking GRUB environment file: $path") if ($verbose >= 1);
+
+	open my $grub_fh, $path or die "Could not open $path: $!\n";
+	my $grub_text = do { local $/; <$grub_fh> };
+	close($grub_fh);
+
+	if ($grub_text =~ /^\s*next_entry\s*=\s*(.+)\s*$/gm) {
+		return $1;
+	}
+
+	if ($grub_text =~ /^\s*saved_entry\s*=\s*(.+)\s*$/gm) {
+		return $1;
+	}
+
+	return "! Unknown boot entry !";
+}
+
+GetOptions(
+	'help|?' => \&help,
+
+	'list!' => \(my $listmode = 0),
+
+	'current!' => \(my $current = 0),
+	'dryrun!' => \(my $dryrun = 0),
+	'grubfile=i' => \(my $grub = "/boot/grub/grub.cfg"),
+	'index|offset=i' => \(my $index = 0),
+	'show!' => \(my $detail = 0),
+	'verbose+' => \(my $verbose = 0),
+) or help(0);
+
+if ($current == 1) {
+	my $real = probeGrubEntry($verbose, $grub);
+	print("Current active boot entry is: $real\n");
+	exit 0;
+}
+
+if (scalar(@ARGV) > 1) {
+	help(1);
+}
+
+if (!$listmode && scalar(@ARGV) < 1) {
+	help(1);
+}
+
+my @all = parseGrubCfg($verbose, $grub);
+
+if ($listmode != 0 && scalar(@ARGV) < 1) {
+	listGrubEntry($verbose, @all);
+	exit 0;
+}
+
+my $pattern = $ARGV[0];
+my @result = filterGrubEntry($verbose, $pattern, @all);
+
+if ($listmode != 0) {
+	listGrubEntry($verbose, @result);
+	exit 0;
+}
+
+if ($index >= scalar(@result)) {
+	print("ERROR: Invalid index value $index\n");
+	exit 1;
+}
+
+print("Selected $index-th boot entry\n") if ($verbose >= 1);
+
+my $ret = 0;
+
+if ($detail) {
+	showGrubBoot($verbose, $grub, $result[$index]);
+}
+else {
+	$ret = selectGrubBoot($verbose, $grub, $dryrun, $result[$index]);
+}
+
+exit $ret;
