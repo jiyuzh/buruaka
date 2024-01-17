@@ -69,7 +69,11 @@ sub help
 		"\n"
 	);
 
-	exit $exitval;
+	if ($exitval =~ /^\d+$/) {
+		exit $exitval;
+	}
+	
+	exit 0;
 }
 
 sub parseGrubCfg

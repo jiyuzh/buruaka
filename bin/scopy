@@ -26,7 +26,7 @@ sub help
 		"ssh-copy is a OSC 52 clipboard writer which supports text auto fragmentation.\n" .
 		"\n" .
 		"Note that this program will buffer ALL outputs before sending. Do NOT use it for\n" .
-		"long running processes or gigantic blob of text\n" .
+		"long running processes or gigantic blob of text.\n" .
 		"\n" .
 		"USAGE:\n" .
 		"    $prog [OPTIONS] FILE\n" .
@@ -45,7 +45,11 @@ sub help
 		"\n"
 	);
 
-	exit $exitval;
+	if ($exitval =~ /^\d+$/) {
+		exit $exitval;
+	}
+	
+	exit 0;
 }
 
 sub computeLimit
