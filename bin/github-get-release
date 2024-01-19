@@ -74,6 +74,8 @@ sub fetchGithubApi
 
 	my $url = "https://api.github.com/repos/$repo/releases/$tag";
 	if ($tag ne "latest") {
+		# Tag URL is weird, it use /tag/ for UI but /tags/ for API
+		# So we just append it automatically rather than ask users to do it
 		$url = "https://api.github.com/repos/$repo/releases/tags/$tag";
 	}
 
@@ -107,6 +109,7 @@ sub filterDownloadEntry
 	my @result;
 
 	foreach my $download (@entries) {
+		# The URL part is "implementation detail", just run RegEx on file name
 		my $filename = basename($download);
 
 		if ($filename =~ /$pattern/gm ) {
@@ -139,6 +142,7 @@ my $apiJson = fetchGithubApi($repo, $tag);
 my @downloads = parseApiJson($apiJson);
 my @results = filterDownloadEntry($pattern, @downloads);
 
+# No matched URL found
 if (!scalar(@results)) {
 	exit 2;
 }

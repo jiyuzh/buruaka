@@ -22,7 +22,7 @@ pat="$1"
 opt="/g"
 fmt="$2"
 
-# Use $0 for match the result itself
+# Use $0 for match the result itself, we need to take care of escape sequence
 fmt=$(echo "$fmt" | perl -pe 's/(?<!\\)((?:\\\\)*)\$0/$1\$\&/g')
 
 if [ "$#" -ge 3 ]; then

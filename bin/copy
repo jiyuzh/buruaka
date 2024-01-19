@@ -69,6 +69,7 @@ sub computeLimit
 	my $screenOverhead = ceil($MAX_OSC52_LENGTH / $MAX_SCREEN_LENGTH) * 4;
 	my $safeguard = 16;
 
+	# Just plan for the worst
 	my $fixedOverhead = $osc52Overhead + $tmuxOverhead + $screenOverhead + $safeguard;
 	my $allowance = $MAX_OSC52_LENGTH - $fixedOverhead;
 
@@ -90,6 +91,7 @@ sub copyTmux
 {
 	my ($seq) = @_;
 
+	# TMUX has special passthrough sequence
 	print("\x1bPtmux;\x1b$seq\x1b\\");
 }
 
@@ -119,13 +121,16 @@ sub copyCore
 {
 	my ($txt) = @_;
 
+	# Generate OSC 52 sequence
 	my $enc = encode_base64($txt, "");
 	my $seq = "\x1b]52;c;$enc\a";
 
+	# Detect terminal to choose the right one
 	if ($ENV{TERM} =~ /\btmux\b/) {
 		copyTmux($seq);
 	}
 	elsif ($ENV{TERM} =~ /\bscreen\b/) {
+		# Some TMUX release may fake itself as screen, so one more check
 		if ($ENV{TMUX} =~ /./) {
 			copyTmux($seq);
 		}
@@ -151,11 +156,13 @@ sub copyAll
 		return 0;
 	}
 
+	# In case the STDIN is used to pipe text, we need another terminal for interactive prompts
 	my $term = Term::ReadLine->new('term');
 	my @_IO = $term->findConsole();
 	my $_IN = $_IO[0];
 	open my $TTY, '<', $_IN or die "Could not open terminal $_IN: $!\n";
 
+	# Text fragmentation
 	my $pos = 0;
 	my $part = 1;
 	my $parts = ceil($len / $limit);
@@ -187,13 +194,16 @@ GetOptions(
 	'help|?' => \&help,
 ) or help(0);
 
+# File mode
 if (scalar(@ARGV) == 1) {
 	$str = readAllText($ARGV[0]);
 }
+# Pipe mode, STDIN is detached from terminal
 elsif (! -t STDIN) {
 	$str = do { local $/; <STDIN> };
 	close STDIN;
 }
+# Terminal mode w/o file input, show help
 else {
 	help(1);
 }

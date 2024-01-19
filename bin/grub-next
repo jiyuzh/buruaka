@@ -115,6 +115,7 @@ sub parseGrubCfg
 		my $name = $+{name};
 		my $id = $+{id};
 
+		# This is to support submenu nesting and optionally detect syntax errors
 		my $prefix = substr($grub_text, $prev, $-[0] - $prev);
 		$prev = $+[0];
 
@@ -134,12 +135,14 @@ sub parseGrubCfg
 			}
 		}
 
+		# Submenu, setup stack frame and parse next
 		if ($class eq "submenu") {
 			$cursor = $id;
 			$submenu = $name;
 			next;
 		}
 
+		# Menuentry, dump stack as a result
 		if ($class eq "menuentry") {
 			my @ids = @idstack;
 			push(@ids, $id);
@@ -153,10 +156,13 @@ sub parseGrubCfg
 			push(@ofs, $offset);
 			my $ofn = join('>', @ofs);
 
+			# We also keep the start position so we can extract content
+			# In the end: (human_name, id_expr, offset_expr, entry_start)
 			my @entry = ($smn, $fqn, $ofn, $-[0]);
 			push(@result, \@entry);
 		}
 
+		# TODO: This may be buggy with consecutive submenu
 		$offset++;
 	}
 
@@ -196,6 +202,7 @@ sub filterGrubEntry
 	foreach my $tmp (@entries) {
 		my @entry = @$tmp;
 
+		# Only filter on human_name and id_expr as they are stable
 		if ($entry[0] =~ /$pattern/gm || $entry[1] =~ /$pattern/gm) {
 			push(@result, \@entry);
 		}
@@ -221,6 +228,7 @@ sub showGrubBoot
 
 	my $text = "";
 
+	# Take every thing before first '{' (entry header) and the paired '}' (entry body)
 	foreach my $char (split('', substr($grub_text, $entry[3]))) {
 		$text .= $char;
 
@@ -247,6 +255,7 @@ sub selectGrubBoot
 	my $output = "";
 	my $ret = 0;
 
+	# Dryrun, we may use `true` to call the real routine but it will trigger post-validation error
 	if ($dryrun != 0) {
 		print("\n") if ($verbose >= 1);
 		print("Dry run boot entry is: " . strGrubEntry(@entry) . "\n");
@@ -260,6 +269,7 @@ sub selectGrubBoot
 		$output = `grub-reboot '$fqn' 2>&1`;
 	}
 	else {
+		# NOTE: grub-set-default will erase grub-reboot config
 		$output = `grub-set-default '$fqn' 2>&1`;
 	}
 
@@ -303,6 +313,7 @@ sub probeGrubEntry
 	my $grub_text = do { local $/; <$grub_fh> };
 	close($grub_fh);
 
+	# This fallback order is from GRUB source code
 	if ($grub_text =~ /^\s*next_entry\s*=\s*(.+)\s*$/gm) {
 		return $1;
 	}
@@ -327,22 +338,26 @@ GetOptions(
 	'verbose+' => \(my $verbose = 0),
 ) or help(0);
 
+# Current mode, just show the current entry and quit
 if ($current == 1) {
 	my $real = probeGrubEntry($verbose, $grub);
 	print("Current active boot entry is: $real\n");
 	exit 0;
 }
 
+# The only positional we accept is a pattern
 if (scalar(@ARGV) > 1) {
 	help(1);
 }
 
+# Positional-less listing mode is allowed (list all parsed entries)
 if (!$listmode && scalar(@ARGV) < 1) {
 	help(1);
 }
 
 my @all = parseGrubCfg($verbose, $grub);
 
+# List all parsed entries if asked
 if ($listmode != 0 && scalar(@ARGV) < 1) {
 	listGrubEntry($verbose, @all);
 	exit 0;
@@ -351,11 +366,13 @@ if ($listmode != 0 && scalar(@ARGV) < 1) {
 my $pattern = $ARGV[0];
 my @result = filterGrubEntry($verbose, $pattern, @all);
 
+# List matched entries if asked
 if ($listmode != 0) {
 	listGrubEntry($verbose, @result);
 	exit 0;
 }
 
+# Pick the choosen one
 if ($index >= scalar(@result)) {
 	print("ERROR: Invalid index value $index\n");
 	exit 2;
@@ -365,6 +382,7 @@ print("Selected $index-th boot entry\n") if ($verbose >= 1);
 
 my $ret = 0;
 
+# See if the user want to see the entry content or apply it
 if ($detail) {
 	showGrubBoot($verbose, $grub, $result[$index]);
 }
