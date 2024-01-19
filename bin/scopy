@@ -19,36 +19,46 @@ sub help
 	my ($exitval) = @_;
 
 	my $prog = basename($0);
-	print(
-		"ssh-copy v1.0.0\n" .
-		"Jiyuan Zhang <jiyuanz3\@illinois.edu>\n" .
-		"\n" .
-		"ssh-copy is a OSC 52 clipboard writer which supports text auto fragmentation.\n" .
-		"\n" .
-		"Note that this program will buffer ALL outputs before sending. Do NOT use it for\n" .
-		"long running processes or gigantic blob of text.\n" .
-		"\n" .
-		"USAGE:\n" .
-		"    $prog [OPTIONS] FILE\n" .
-		"    COMMAND | $prog [OPTIONS]\n" .
-		"\n" .
-		"ARGS:\n" .
-		"    <FILE>\n" .
-		"        A file to read copying data from.\n" .
-		"\n" .
-		"    <COMMAND>\n" .
-		"        A command to pipe copying data from.\n" .
-		"\n" .
-		"OPTIONS:\n" .
-		"    -h, -?, --help\n" .
-		"        Show this help.\n" .
-		"\n"
-	);
+
+	my $help = <<"EOF";
+ssh-copy v1.0.0
+Jiyuan Zhang <jiyuanz3\@illinois.edu>
+
+ssh-copy is a OSC 52 clipboard writer which supports auto text fragmentation.
+
+Note that this program will buffer ALL outputs before sending. Do NOT use it for
+long running processes or gigantic blob of text.
+
+USAGE:
+    $prog [OPTIONS] FILE
+    COMMAND | $prog [OPTIONS]
+
+ARGS:
+    <FILE>
+        A file to read copying data from.
+
+    <COMMAND>
+        A command to pipe copying data from.
+
+OPTIONS:
+    -h, -?, --help
+        Show this help.
+
+OUTPUT:
+    Status messages for human consumption.
+
+EXIT STATUS:
+    0   The requested action was successfully performed.
+
+    1   Invalid command-line usage.
+
+EOF
+	print($help);
 
 	if ($exitval =~ /^\d+$/) {
 		exit $exitval;
 	}
-	
+
 	exit 0;
 }
 

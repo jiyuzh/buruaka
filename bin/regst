@@ -23,7 +23,7 @@ opt="/g"
 fmt="$2"
 
 # Use $0 for match the result itself
-fmt=$(echo "$fmt" | perl -pe 's/\$0/\$\&/g')
+fmt=$(echo "$fmt" | perl -pe 's/(?<!\\)((?:\\\\)*)\$0/$1\$\&/g')
 
 if [ "$#" -ge 3 ]; then
 	opt="$3"

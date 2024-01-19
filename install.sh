@@ -53,7 +53,7 @@ if [ "$EUID" -eq 0 ]; then
 fi
 
 #
-# Installer
+# Dependency
 #
 
 # Parameters:
@@ -67,6 +67,23 @@ function deploy_file {
 function reflect_file {
 	link_path "$3" "$SCRIPT_DIR/reflect/$1/$2" 2 0
 }
+
+function dep_uctags {
+	sudo wget -O "/opt/uctags.tar.xz" "$("$SCRIPT_DIR/bin/github-get-release" -1 universal-ctags/ctags-nightly-build linux-x86_64)"
+	sudo mkdir -p "/opt/uctags"
+	sudo tar -xf "/opt/uctags.tar.xz" -C "/opt/uctags" --strip-components=1
+	sudo rm -f "/opt/uctags.tar.xz"
+
+	if sudo test -e "/opt/uctags/bin/ctags"; then
+		sudo ln -s /opt/uctags/bin/ctags /usr/local/bin/ctags
+	else
+		sudo rm -rf "/opt/uctags"
+	fi
+}
+
+#
+# Installer
+#
 
 function install_noop {
 	true
@@ -111,7 +128,8 @@ function install_micro {
 	# Install micro editor, depends on bash_conf to override `vi` (use `vim` for _that_ editor)
 	sudo apt-get update
 	sudo apt-get install -y xsel xclip # for SSH clipboard support
-	sudo apt-get install -y fzf exuberant-ctags # for jump plugin
+	sudo apt-get install -y fzf # for jump plugin
+	dep_uctags
 
 	curl https://getmic.ro | sudo bash
 	move_path "micro" "/usr/bin/micro" 1 1
@@ -138,8 +156,8 @@ function install_ripgrep {
 
 function install_delta {
 	# Use musl version to avoid libc mess
-	sudo wget -O delta-musl.deb https://github.com/dandavison/delta/releases/download/0.16.5/git-delta-musl_0.16.5_amd64.deb
-	#sudo dpkg -i delta-musl.deb
+	sudo wget -O delta-musl.deb "$("$SCRIPT_DIR/bin/github-get-release" -1 dandavison/delta 'git-delta-musl_.*_amd64.deb')"
+	sudo dpkg -i delta-musl.deb
 	sudo rm -f delta-musl.deb
 
 	if sudo test ! -e "$HOME/.gitconfig"; then

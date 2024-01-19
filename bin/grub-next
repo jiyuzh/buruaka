@@ -15,64 +15,78 @@ sub help
 	my ($exitval) = @_;
 
 	my $prog = basename($0);
-	print(
-		"grub-next v1.0.0\n" .
-		"Jiyuan Zhang <jiyuanz3\@illinois.edu>\n" .
-		"\n" .
-		"grub-next is a wrapper around grub-reboot which let you filter desired boot\n" .
-		"entries and set is as the target of next boot.\n" .
-		"\n" .
-		"USAGE:\n" .
-		"    $prog [OPTIONS] PATTERN [--list]\n" .
-		"    $prog [OPTIONS] --current\n" .
-		"    $prog [OPTIONS] --list\n" .
-		"\n" .
-		"ARGS:\n" .
-		"    <PATTERN>\n" .
-		"        A regular expression used for searching. To match a pattern beginning\n" .
-		"        with a dash, use the special '--' delimiter to indicate that no more\n" .
-		"        flags will be provided.\n" .
-		"\n" .
-		"OPTIONS:\n" .
-		"    -c, --current\n" .
-		"        Display the active boot entry and quit.\n" .
-		"\n" .
-		"    -d, --dryrun\n" .
-		"        Run the program without changing system setting.\n" .
-		"\n" .
-		"    -g, --grub, --grubfile <PATH>\n" .
-		"        Specify the grub config file to work with.\n" .
-		"\n" .
-		"        The default value is: /boot/grub/grub.cfg\n" .
-		"\n" .
-		"    -h, -?, --help\n" .
-		"        Show this help.\n" .
-		"\n" .
-		"    -i, --index, --offset <INDEX>\n" .
-		"        When multiple bootable entries matches the pattern, the entry listed at\n" .
-		"        the specified index will be selected.\n" .
-		"\n" .
-		"        The default value is: 0\n" .
-		"\n" .
-		"    -l, --list\n" .
-		"        List all bootable entries.\n" .
-		"\n" .
-		"    -p, --persistent\n" .
-		"        The boot entry choice shall be preserved across multiple reboot.\n" .
-		"\n" .
-		"    -s, --show\n" .
-		"        Display the content of the selected boot entry and quit without changing\n". 
-		"        system settings.\n" .
-		"\n" .
-		"    -v, -vv\n" .
-		"        Change the verbosity of the program output.\n". 
-		"\n"
-	);
+
+	my $help = <<"EOF";
+grub-next v1.0.0
+Jiyuan Zhang <jiyuanz3\@illinois.edu>
+
+grub-next is a wrapper around grub-reboot which let you filter desired boot
+entries and set is as the target of next boot.
+
+USAGE:
+    $prog [OPTIONS] PATTERN [--list]
+    $prog [OPTIONS] --current
+    $prog [OPTIONS] --list
+
+ARGS:
+    <PATTERN>
+        A regular expression used for searching. To match a pattern beginning
+        with a dash, use the special '--' delimiter to indicate that no more
+        flags will be provided.
+
+OPTIONS:
+    -c, --current
+        Display the active boot entry and quit.
+
+    -d, --dryrun
+        Run the program without changing system setting.
+
+    -g, --grub, --grubfile <PATH>
+        Specify the grub config file to work with.
+
+        The default value is: /boot/grub/grub.cfg
+
+    -h, -?, --help
+        Show this help.
+
+    -i, --index, --offset <INDEX>
+        When multiple bootable entries matches the pattern, the entry listed at
+        the specified index will be selected.
+
+        The default value is: 0
+
+    -l, --list
+        List all bootable entries.
+
+    -p, --persistent
+        The boot entry choice shall be preserved across multiple reboot.
+
+    -s, --show
+        Display the content of the selected boot entry and quit without changing
+        system settings.
+
+    -v, -vv
+        Change the verbosity of the program output.
+
+OUTPUT:
+    Status messages for human consumption.
+
+EXIT STATUS:
+    0   The requested action was successfully performed.
+
+    1   Invalid command-line usage.
+
+    2   Given boot entry is not found.
+
+    3   System setting change failed.
+
+EOF
+	print($help);
 
 	if ($exitval =~ /^\d+$/) {
 		exit $exitval;
 	}
-	
+
 	exit 0;
 }
 
@@ -264,7 +278,7 @@ sub selectGrubBoot
 		else {
 			print("Unable to set boot entry to: " . strGrubEntry(@entry) . "\n");
 			print("Current active boot entry is: $real\n");
-			return 1;
+			return 3;
 		}
 	}
 	else {
@@ -273,7 +287,7 @@ sub selectGrubBoot
 		print("\n");
 		print("Failed to set boot entry to: " . strGrubEntry(@entry) . "\n");
 		print("Current active boot entry is: $real\n");
-		return 1;
+		return 3;
 	}
 }
 
@@ -305,7 +319,7 @@ GetOptions(
 
 	'current!' => \(my $current = 0),
 	'dryrun!' => \(my $dryrun = 0),
-	'grubfile=i' => \(my $grub = "/boot/grub/grub.cfg"),
+	'grubfile=s' => \(my $grub = "/boot/grub/grub.cfg"),
 	'index|offset=i' => \(my $index = 0),
 	'list!' => \(my $listmode = 0),
 	'persistent!' => \(my $persistent = 0),
@@ -344,7 +358,7 @@ if ($listmode != 0) {
 
 if ($index >= scalar(@result)) {
 	print("ERROR: Invalid index value $index\n");
-	exit 1;
+	exit 2;
 }
 
 print("Selected $index-th boot entry\n") if ($verbose >= 1);

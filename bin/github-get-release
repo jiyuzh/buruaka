@@ -1,0 +1,155 @@
+#!/usr/bin/env perl
+
+use warnings;
+use strict;
+
+use POSIX;
+use File::Basename;
+use Data::Dumper;
+use Getopt::Long;
+use JSON::PP;
+use HTTP::Tiny;
+
+my $SCRIPT_DIR = dirname(__FILE__);
+
+sub help
+{
+	my ($exitval) = @_;
+
+	my $prog = basename($0);
+
+	my $help = <<"EOF";
+github-get-release v1.0.0
+Jiyuan Zhang <jiyuanz3\@illinois.edu>
+
+github-get-release is a tool to find artifact download URL via GitHub API.
+
+USAGE:
+    $prog [OPTIONS] REPO [FILTER]
+
+ARGS:
+    <REPO>
+        The short-form GitHub repository name, e.g. torvalds/linux.
+
+    <FILTER>
+        A regular expression that applies on the resulting file name. Only
+        matched results will be returned.
+
+OPTIONS:
+    -h, -?, --help
+        Show this help.
+
+    -t, --tag <TAG>
+        Specify a release version tag to fetch the artifact from. The value
+        must be a valid version tag as shown in release page URL, e.g. v5.15.
+
+        The default value is: latest
+
+    -1
+        Print only one matched URL, even if multiple are available.
+
+OUTPUT:
+    The matched URLs. One URL per line.
+
+EXIT STATUS:
+    0   The requested action was successfully performed.
+
+    1   Invalid command-line usage.
+
+    2   No URL available under given parameters.
+
+EOF
+	print($help);
+
+	if ($exitval =~ /^\d+$/) {
+		exit $exitval;
+	}
+
+	exit 0;
+}
+
+sub fetchGithubApi
+{
+	my ($repo, $tag) = @_;
+
+	my $url = "https://api.github.com/repos/$repo/releases/$tag";
+	if ($tag ne "latest") {
+		$url = "https://api.github.com/repos/$repo/releases/tags/$tag";
+	}
+
+	my $response = HTTP::Tiny->new->get($url);
+
+	if (!$response->{success} || !length($response->{content})) {
+		die("Unable to retrieve info from URL: $url\n");
+	}
+
+	return $response->{content};
+}
+
+sub parseApiJson
+{
+	my ($json) = @_;
+
+	my $data = decode_json($json);
+	my @result;
+
+	foreach my $asset ( @{ $data->{assets} } ) {
+		push(@result, $asset->{browser_download_url});
+	}
+
+	return @result;
+}
+
+sub filterDownloadEntry
+{
+	my ($pattern, @entries) = @_;
+
+	my @result;
+
+	foreach my $download (@entries) {
+		my $filename = basename($download);
+
+		if ($filename =~ /$pattern/gm ) {
+			push(@result, $download);
+		}
+	}
+
+	return @result;
+}
+
+GetOptions(
+	'help|?' => \&help,
+
+	'tag=s' => \(my $tag = "latest"),
+	'1!' => \(my $onlyFirst = 0),
+) or help(0);
+
+if (scalar(@ARGV) < 1 || scalar(@ARGV) > 2) {
+	help(1);
+}
+
+my $repo = $ARGV[0];
+my $pattern = "";
+
+if (scalar(@ARGV) == 2) {
+	$pattern = $ARGV[1];
+}
+
+my $apiJson = fetchGithubApi($repo, $tag);
+my @downloads = parseApiJson($apiJson);
+my @results = filterDownloadEntry($pattern, @downloads);
+
+if (!scalar(@results)) {
+	exit 2;
+}
+
+if ($onlyFirst) {
+	print("$results[0]\n");
+	exit 0;
+}
+
+foreach my $disp (@results) {
+	print("$disp\n");
+}
+
+exit 0;
