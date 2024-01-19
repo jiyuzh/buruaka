@@ -8,10 +8,10 @@ set -euo pipefail
 
 # failure message
 function __error_handing {
-	local last_status_code=$1;
-	local error_line_number=$2;
+	local last_status_code="$1";
+	local error_line_number="$2";
 	echo 1>&2 "Error - exited with status $last_status_code at line $error_line_number";
-	perl -slne 'if($.+5 >= $ln && $.-4 <= $ln){ $_="$. $_"; s/$ln/">" x length($ln)/eg; s/^\D+.*?$/\e[1;31m$&\e[0m/g;  print}' -- -ln=$error_line_number $0
+	perl -slne 'if($.+5 >= $ln && $.-4 <= $ln){ $_="$. $_"; s/$ln/">" x length($ln)/eg; s/^\D+.*?$/\e[1;31m$&\e[0m/g;  print}' -- -ln="$error_line_number" "$0"
 }
 
 trap '__error_handing $? $LINENO' ERR
@@ -30,7 +30,7 @@ source "$SCRIPT_DIR/lib/common.sh"
 echo "Environment Harmonization Script by Jiyuan Zhang"
 echo
 
-DISTRO_VERSION=`lsb_release -a 2>&1 | perl -ne 'print "$1" if /\b(Ubuntu 2.*)/'`
+DISTRO_VERSION=$(lsb_release -a 2>&1 | perl -ne 'print "$1" if /\b(Ubuntu 2.*)/')
 if [ -z "$DISTRO_VERSION" ]; then
 	echo "This script requires Ubuntu 20.04 or 22.04 to run"
 	exit 1
@@ -78,8 +78,9 @@ function install_core {
 	sudo apt-get install -y apt-transport-https
 	sudo apt-get update
 	sudo apt-get install -y bash curl git man perl sudo wget screen vim nano software-properties-common zip unzip tar rsync
-	sudo apt-get install -y python3 python3-dev python3-pip python3-venv python3-userpath
-	python3 -m userpath append ~/.local/bin
+	sudo apt-get install -y python3 python3-dev python3-pip python3-venv
+	sudo apt-get install -y python3-userpath || pip3 install userpath || true
+	python3 -m userpath append ~/.local/bin || true
 }
 
 function install_kernbuild {
@@ -88,6 +89,7 @@ function install_kernbuild {
 	sudo apt-get install -y build-essential linux-tools-common linux-tools-generic liblz4-tool dwarves binutils elfutils gdb flex bison libncurses-dev libssl-dev libelf-dev
 	sudo apt-get install -y cmake gcc g++ make libiberty-dev autoconf zstd libboost-all-dev arch-install-scripts
 	sudo apt-get install -y libdw-dev systemtap-sdt-dev libunwind-dev libslang2-dev libperl-dev liblzma-dev libzstd-dev libcap-dev libnuma-dev libbabeltrace-ctf-dev libbfd-dev
+	sudo apt-get install -y clang clang-format clang-tools llvm
 }
 
 function install_checkinstall {
@@ -252,7 +254,7 @@ function install_grub_conf {
 	#   Allow kernel selection
 	#   Remember last selected entry
 	#   Disable KASLR (for KGDB)
-	TS=`date '+%F-%s'`
+	TS=$(date '+%F-%s')
 
 	if sudo test ! -e "/etc/default/grub"; then
 		sudo mkdir -vp "/etc/default/"
@@ -265,7 +267,7 @@ function install_grub_conf {
 
 	if sudo test -f "/etc/grub.d/10_linux"; then
 		copy_path "/etc/grub.d/10_linux" "$SCRIPT_DIR/reflect/grub/10_linux.bak.$TS" 1 1
-		sudo patch -l /etc/grub.d/10_linux $SCRIPT_DIR/install/grub/10_linux.patch
+		sudo patch -l /etc/grub.d/10_linux "$SCRIPT_DIR/install/grub/10_linux.patch"
 	fi
 
 	copy_path "$SCRIPT_DIR/install/grub/grub.default" "/etc/default/grub" 1 1

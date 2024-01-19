@@ -4,7 +4,7 @@ set -euo pipefail
 
 function do_confirm {
 	while :; do
-		read -p "$2 (y/n) " yn
+		read -r -p "$2 (y/n) " yn
 		case $yn in
 		[Yy]* )
 			eval "$1=1"
@@ -23,7 +23,7 @@ function do_confirm {
 
 function read_num {
 	while :; do
-		read -p "$2: " ans
+		read -r -p "$2: " ans
 
 		if echo "$ans" | regex '^\d+$' &>/dev/null; then
 			eval "$1=$ans"
@@ -36,7 +36,7 @@ function read_num {
 
 function read_ident {
 	while :; do
-		read -p "$2: " ans
+		read -r -p "$2: " ans
 
 		if echo "$ans" | regex '^[a-zA-Z]\w*$' &>/dev/null; then
 			eval "$1=$ans"
@@ -49,7 +49,7 @@ function read_ident {
 
 function read_str {
 	while :; do
-		read -p "$2: " ans
+		read -r -p "$2: " ans
 
 		if [ -z "$ans" ]; then
 			echo "Please answer a string."
@@ -64,7 +64,7 @@ function read_path {
 	exist="$3"
 
 	while :; do
-		read -p "$2: " ans
+		read -r -p "$2: " ans
 
 		if [ -z "$ans" ]; then
 			echo "Please answer an integer."
@@ -72,16 +72,16 @@ function read_path {
 			if [ "$exist" -eq "1" ]; then
 				file=$(realpath -e "$ans")
 
-				[ "$?" -eq "0" ] && [ ! -z "$file" ] && [ -e "$file" ]
+				[ "$?" -eq "0" ] && [ -n "$file" ] && [ -e "$file" ]
 			else
 				dir=$(dirname "$(realpath "$ans")")
 				mkdir -pv "$dir"
 				file=$(realpath "$ans")
 
 				if [ "$exist" -eq "0" ]; then
-					[ "$?" -eq "0" ] && [ ! -z "$file" ] && [ ! -e "$file" ]
+					[ "$?" -eq "0" ] && [ -n "$file" ] && [ ! -e "$file" ]
 				else
-					[ "$?" -eq "0" ] && [ ! -z "$file" ]
+					[ "$?" -eq "0" ] && [ -n "$file" ]
 				fi
 			fi
 

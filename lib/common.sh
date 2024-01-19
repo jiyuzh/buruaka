@@ -25,7 +25,7 @@ function assert_root {
 # Example: do_confirm shouldDelete "Delete the file?"
 function do_confirm {
 	while :; do
-		read -p "$2 (y/n) " yn
+		read -r -p "$2 (y/n) " yn
 		case $yn in
 		[Yy]* )
 			eval "$1=1"
@@ -53,7 +53,7 @@ function do_confirm {
 # Example: read_num size "Size of the file?"
 function read_num {
 	while :; do
-		read -p "$2 " ans
+		read -r -p "$2 " ans
 
 		if echo "$ans" | regex '^\d+$' &>/dev/null; then
 			eval "$1=$ans"
@@ -75,7 +75,7 @@ function read_num {
 # Example: read_ident name "Name of the variable?"
 function read_ident {
 	while :; do
-		read -p "$2 " ans
+		read -r -p "$2 " ans
 
 		if echo "$ans" | regex '^[a-zA-Z]\w*$' &>/dev/null; then
 			eval "$1=$ans"
@@ -97,7 +97,7 @@ function read_ident {
 # Example: read_str content "Content of the file?"
 function read_str {
 	while :; do
-		read -p "$2: " ans
+		read -r -p "$2: " ans
 
 		if [ -z "$ans" ]; then
 			echo "Please answer a string."
@@ -125,7 +125,7 @@ function read_path {
 	exist="$3"
 
 	while :; do
-		read -p "$2: " ans
+		read -r -p "$2: " ans
 
 		if [ -z "$ans" ]; then
 			echo "Please answer an integer."
@@ -133,16 +133,16 @@ function read_path {
 			if [ "$exist" -eq "1" ]; then
 				file=$(realpath -e "$ans")
 
-				[ "$?" -eq "0" ] && [ ! -z "$file" ] && [ -e "$file" ]
+				[ "$?" -eq "0" ] && [ -n "$file" ] && [ -e "$file" ]
 			else
 				dir=$(dirname "$(realpath "$ans")")
 				mkdir -pv "$dir"
 				file=$(realpath "$ans")
 
 				if [ "$exist" -eq "0" ]; then
-					[ "$?" -eq "0" ] && [ ! -z "$file" ] && [ ! -e "$file" ]
+					[ "$?" -eq "0" ] && [ -n "$file" ] && [ ! -e "$file" ]
 				else
-					[ "$?" -eq "0" ] && [ ! -z "$file" ]
+					[ "$?" -eq "0" ] && [ -n "$file" ]
 				fi
 			fi
 
@@ -248,7 +248,9 @@ function copy_path {
 		isSudo="$4"
 	fi
 
-	local dir=$(dirname "$target")
+	local dir
+
+	dir=$(dirname "$target")
 
 	# parent does not exists or is not a directory
 	if sudo test ! -d "$dir"; then
@@ -309,7 +311,9 @@ function move_path {
 		isSudo="$4"
 	fi
 
-	local dir=$(dirname "$target")
+	local dir
+
+	dir=$(dirname "$target")
 
 	# parent does not exists or is not a directory
 	if sudo test ! -d "$dir"; then
@@ -370,7 +374,9 @@ function link_path {
 		isSudo="$4"
 	fi
 
-	local dir=$(dirname "$target")
+	local dir
+
+	dir=$(dirname "$target")
 
 	# parent does not exists or is not a directory
 	if sudo test ! -d "$dir"; then
@@ -401,4 +407,3 @@ function link_path {
 		ln -vTs "$arg" "$source" "$target"
 	fi
 }
-

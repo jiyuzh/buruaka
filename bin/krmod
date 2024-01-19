@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-module=`ls -t *.ko | head -n 1`
+module=$(ls -t ./*.ko | head -n 1)
 
 if [ ! -z "$module" ]; then
 	if [ -f "$module" ]; then

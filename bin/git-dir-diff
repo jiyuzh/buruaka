@@ -3,10 +3,11 @@
 path1="$1"
 path2="$2"
 
-export GIT_INDEX_FILE=`mktemp -u .git/dir-diff-temp.XXXXXX.index`
+GIT_INDEX_FILE=$(mktemp -u .git/dir-diff-temp.XXXXXX.index)
+export GIT_INDEX_FILE
 
-global_prefix=`git rev-parse --show-toplevel`
-local_prefix=`git rev-parse --show-prefix`
+global_prefix=$(git rev-parse --show-toplevel)
+local_prefix=$(git rev-parse --show-prefix)
 
 git add "$path1" "$path2"
 CMP_TREE=$(git write-tree)

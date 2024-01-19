@@ -1,12 +1,12 @@
 #!/usr/bin/env sh
 
-module=`ls -t *.ko | head -n 1`
+module=$(ls -t ./*.ko | head -n 1)
 kernel="/lib/modules/$(uname -r)/build/vmlinux"
 
 do_next=1
 
-if [ "$do_next" -ne 0 ] && [ ! -z "$module" ]; then
-	module=`realpath "$module" 2>/dev/null`
+if [ "$do_next" -ne 0 ] && [ -n "$module" ]; then
+	module=$(realpath "$module" 2>/dev/null)
 	
 	if [ -f "$module" ]; then
 		echo
@@ -17,8 +17,8 @@ if [ "$do_next" -ne 0 ] && [ ! -z "$module" ]; then
 	fi
 fi
 
-if [ "$do_next" -ne 0 ] && [ ! -z "$kernel" ]; then
-	kernel=`realpath "$kernel" 2>/dev/null`
+if [ "$do_next" -ne 0 ] && [ -n "$kernel" ]; then
+	kernel=$(realpath "$kernel" 2>/dev/null)
 
 	if [ -f "$kernel" ]; then
 		echo

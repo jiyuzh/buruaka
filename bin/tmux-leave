@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 
-if [ ! -z "$TMUX" ]; then
+if [ -n "$TMUX" ]; then
 	tmux detach
 fi
