@@ -94,10 +94,19 @@ function install_core {
 	sudo apt-get update
 	sudo apt-get install -y apt-transport-https
 	sudo apt-get update
-	sudo apt-get install -y bash curl git man perl sudo wget screen vim nano software-properties-common zip unzip tar rsync
+	sudo apt-get install -y bash curl git man perl perl-doc sudo wget screen vim nano software-properties-common zip unzip tar rsync
 	sudo apt-get install -y python3 python3-dev python3-pip python3-venv
-	sudo apt-get install -y python3-userpath || pip3 install userpath || true
-	python3 -m userpath append ~/.local/bin || true
+	sudo apt-get install -y python3-userpath || pip3 install userpath
+
+	if ! python3 -m userpath verify "$HOME/.local/bin"; then
+		python3 -m userpath append "$HOME/.local/bin"
+		export PATH="$PATH:$HOME/.local/bin"
+	fi
+
+	if ! python3 -m userpath verify "$SCRIPT_DIR/bin"; then
+		python3 -m userpath append "$SCRIPT_DIR/bin"
+		export PATH="$PATH:$SCRIPT_DIR/bin"
+	fi
 }
 
 function install_kernbuild {
@@ -263,7 +272,7 @@ function install_gdb_conf {
 
 	deploy_file "gdb" ".gdbinit" "$HOME/.gdbinit"
 
-	wget -O ~/.gdb-dashboard https://git.io/.gdbinit
+	wget -O "$HOME/.gdb-dashboard" https://git.io/.gdbinit
 	pip3 install pygments
 }
 
