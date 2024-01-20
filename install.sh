@@ -118,11 +118,6 @@ function install_kernbuild {
 	sudo apt-get install -y clang clang-format clang-tools llvm
 }
 
-function install_checkinstall {
-	# No make install or pain later
-	sudo apt-get install -y checkinstall
-}
-
 function install_dotnet {
 	# I love Microsoft
 	sudo wget https://dot.net/v1/dotnet-install.sh -O /opt/dotnet-install.sh
