@@ -69,7 +69,7 @@ function reflect_file {
 }
 
 function dep_uctags {
-	sudo wget -O "/opt/uctags.tar.xz" "$("$SCRIPT_DIR/bin/github-get-release" -1 universal-ctags/ctags-nightly-build linux-x86_64)"
+	sudo wget -O "/opt/uctags.tar.xz" "$("$SCRIPT_DIR/bin/github-get-release" -1 universal-ctags/ctags-nightly-build 'uctags-.*-linux-x86_64.tar.xz')"
 	sudo mkdir -p "/opt/uctags"
 	sudo tar -xf "/opt/uctags.tar.xz" -C "/opt/uctags" --strip-components=1
 	sudo rm -f "/opt/uctags.tar.xz"
@@ -198,7 +198,7 @@ END
 
 function install_bat {
 	# Use musl version to avoid libc mess
-	sudo wget -O bat-musl.deb https://github.com/sharkdp/bat/releases/download/v0.24.0/bat-musl_0.24.0_amd64.deb
+	sudo wget -O bat-musl.deb "$("$SCRIPT_DIR/bin/github-get-release" -1 sharkdp/bat 'bat-musl_.*_amd64.deb')"
 	sudo dpkg -i bat-musl.deb
 	sudo rm -f bat-musl.deb
 
@@ -206,7 +206,7 @@ function install_bat {
 }
 
 function install_moar {
-	sudo wget -O /usr/local/bin/moar https://github.com/walles/moar/releases/download/v1.21.0/moar-v1.21.0-linux-386
+	sudo wget -O /usr/local/bin/moar "$("$SCRIPT_DIR/bin/github-get-release" -1 walles/moar 'moar-.*-linux-386')"
 	sudo chmod +x /usr/local/bin/moar
 }
 
