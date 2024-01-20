@@ -5,15 +5,15 @@ ____cdls_hi=8 # high watermark (lines of output)
 ____cdls_lo=6 # low watermark (lines of output)
 
 ____cdls_print () {
-	____cdls_txt=`ls -C -w $(tput cols) --color=always`
-	____cdls_cnt=`echo "$____cdls_txt" | wc -l`
+	____cdls_txt=$(ls -C -w "$(tput cols)" --color=always)
+	____cdls_cnt=$(echo "$____cdls_txt" | wc -l)
 
-	if [ $____cdls_cnt -lt $____cdls_hi ]; then
+	if [ "$____cdls_cnt" -lt "$____cdls_hi" ]; then
 		echo "$____cdls_txt"
 	else
-		____cdls_head=$(($____cdls_lo / 2))
-		____cdls_tail=$(($____cdls_lo - $____cdls_head))
-		____cdls_rem=$(($____cdls_cnt - $____cdls_lo))
+		____cdls_head=$((____cdls_lo / 2))
+		____cdls_tail=$((____cdls_lo - ____cdls_head))
+		____cdls_rem=$((____cdls_cnt - ____cdls_lo))
 		
 		echo "$____cdls_txt" | head -n $____cdls_head
 		echo "..."
@@ -23,9 +23,11 @@ ____cdls_print () {
 }
 
 ____cdls_forward () {
-	____cdls_normpath=`realpath -es "$PWD" 2>/dev/null`
+	____cdls_normpath=$(realpath -es "$PWD" 2>/dev/null)
+
 	cd "$1"
-	if [ "$?" -eq "0" ] && [ ! -z "$____cdls_normpath" ] && [ "$____cdls_last" != "$____cdls_normpath" ]; then
+
+	if [ "$?" -eq "0" ] && [ -n "$____cdls_normpath" ] && [ "$____cdls_last" != "$____cdls_normpath" ]; then
 		____cdls_hist=( "$____cdls_normpath" "${____cdls_hist[@]}" )
 		____cdls_last="$____cdls_normpath"
 	fi
@@ -41,10 +43,10 @@ ____cdls_bachward () {
 
 	____cdls_normpath="${____cdls_hist[$____cdls_idx]}"
 
-	if [ ! -z "$____cdls_normpath" ]; then
+	if [ -n "$____cdls_normpath" ]; then
 		cd "$____cdls_normpath"
 
-		____cdls_idx=$(($____cdls_idx + 1))
+		____cdls_idx=$((____cdls_idx + 1))
 		____cdls_hist=( "${____cdls_hist[@]:$____cdls_idx}" )
 	else
 		echo "No more history. Staying in current folder."
@@ -57,7 +59,7 @@ ____cdls_history () {
 	i=1
 	for ____cdls_normpath in "${____cdls_hist[@]}"; do
 		echo "	$i	$____cdls_normpath"
-		i=$(($i + 1))
+		i=$((i + 1))
 	done
 }
 
@@ -92,7 +94,7 @@ HISTTIMEFORMAT='%F %T '
 # PowerLine-like PS
 ____SEP=''
 ____git_branch () {
-	____git=`git rev-parse --abbrev-ref HEAD 2> /dev/null`
+	____git=$(git rev-parse --abbrev-ref HEAD 2> /dev/null)
 
 	if [ "$____git" = "" ]; then
 		____git='?'
@@ -107,21 +109,21 @@ ____add_ps1 () {
 	____fg=$2
 	____bg=$3
 	
-	if [ $____SEPFG -lt 256 ]; then
+	if [ "$____SEPFG" -lt 256 ]; then
 		# not first part, inhert sep
-		PS1+='\['"$(tput setaf $____SEPFG)$(tput setab $____bg)"'\]$____SEP'
+		PS1+='\['"$(tput setaf "$____SEPFG")$(tput setab "$____bg")"'\]$____SEP'
 	fi
 
-	if [ $____bg -ge 256 ] || [ $____fg -ge 256 ]; then
+	if [ "$____bg" -ge 256 ] || [ "$____fg" -ge 256 ]; then
 		# final part, cleanup
 		PS1+='\['"$(tput sgr0)"'\]'
 		
 		____SEPFG=256
 	else
 		# middle part, output text
-		PS1+='\['"$(tput setaf $____fg)$(tput setab $____bg)"'\]'" $____txt "
+		PS1+='\['"$(tput setaf "$____fg")$(tput setab "$____bg")"'\]'" $____txt "
 
-		____SEPFG=$____bg
+		____SEPFG="$____bg"
 	fi
 }
 
@@ -174,7 +176,12 @@ fi
 ____show_exception () {
 	____ret="$?"
 	if [ "$____ret" -ne "0" ]; then
-		printf '\n'"$(tput setaf 9)(Return Code = $____ret)$(tput sgr0)"'\n'
+		____signame=""
+		if [ "$____ret" -ge "128" ]; then
+			____signame=" / SIG$(kill -l $((____ret - 128)))"
+		fi
+
+		printf '\n%s\n' "$(tput setaf 9)(Return Code = $____ret$____signame)$(tput sgr0)"
 	fi
 }
 
@@ -187,6 +194,4 @@ PROMPT_COMMAND="${PROMPT_COMMAND}"$'\n'"____post_exec;";
 # Idempotence
 if [[ -z "$BURUAKA_INIT_ONCE" ]]; then
 	export BURUAKA_INIT_ONCE=1
-
-	export PATH="$PATH:$____buruaka/bin"
 fi
