@@ -178,7 +178,10 @@ ____show_exception () {
 	if [ "$____ret" -ne "0" ]; then
 		____signame=""
 		if [ "$____ret" -ge "128" ]; then
-			____signame=" / SIG$(kill -l $((____ret - 128)))"
+			____signame="$(kill -l $((____ret - 128)) 2>/dev/null)"
+			if [ -n "$____signame" ]; then
+				____signame=" / SIG$____signame"
+			fi
 		fi
 
 		printf '\n%s\n' "$(tput setaf 9)(Return Code = $____ret$____signame)$(tput sgr0)"
@@ -194,4 +197,6 @@ PROMPT_COMMAND="${PROMPT_COMMAND}"$'\n'"____post_exec;";
 # Idempotence
 if [[ -z "$BURUAKA_INIT_ONCE" ]]; then
 	export BURUAKA_INIT_ONCE=1
+
+	# Nothing here yet
 fi
