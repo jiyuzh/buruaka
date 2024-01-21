@@ -1,0 +1,106 @@
+#!/usr/bin/env perl
+
+use warnings;
+use strict;
+
+use POSIX;
+use File::Basename;
+use Data::Dumper;
+use Getopt::Long;
+use JSON::PP;
+use HTTP::Tiny;
+
+my $SCRIPT_DIR = dirname(__FILE__);
+
+sub help
+{
+	my ($exitval) = @_;
+
+	my $prog = basename($0);
+
+	my $help = <<"EOF";
+roselia-alert v1.0.0
+Jiyuan Zhang <jiyuanz3\@illinois.edu>
+
+roselia-alert is a user notifier using the Roselia shell co-protocol.
+
+Roselia is a REST API protocol for shell rich experience.
+
+USAGE:
+    $prog [MESSAGE] [TITLE]
+
+ARGS:
+    <MESSAGE>
+        The message to show.
+
+    <TITLE>
+        A title for the message.
+
+OPTIONS:
+    -h, -?, --help
+        Show this help.
+
+OUTPUT:
+    None.
+
+EXIT STATUS:
+    0   The requested action was successfully performed.
+
+    1   Invalid command-line usage.
+
+    2   Failed to connect to the server.
+
+    3   Failed to send clipboard data.
+
+EOF
+	print($help);
+
+	if ($exitval =~ /^\d+$/) {
+		exit $exitval;
+	}
+
+	exit 0;
+}
+
+sub doAlert
+{
+	my ($ep, $title, $body) = @_;
+
+	my $headers = { 'Content-Type' => "application/json" };
+	my $data = { "title" => $title, "body" => $body };
+
+	my $response = HTTP::Tiny->new->post("$ep/notify", { content => encode_json($data), headers => $headers });
+
+	return ($response->{success}) && ($response->{status} == 200);
+}
+
+GetOptions(
+	'help|?' => \&help,
+) or help(1);
+
+my $str = "";
+my $ep = `"$SCRIPT_DIR/roselia-probe"`;
+
+exit 2 if ($? != 0 || $ep eq "");
+
+if (scalar(@ARGV) > 2) {
+	help(1);
+}
+
+my $host = `hostname || echo 'Unknown Host'`;
+$host =~ s/\n//gm;
+
+my $body = "Host $host sent a notification.";
+my $title = "Message from $host";
+
+if (@ARGV >= 1) {
+	$body = "$ARGV[0]";
+}
+
+if (@ARGV >= 2) {
+	$title = "$ARGV[1] (from $host)";
+}
+
+exit 3 unless doAlert($ep, $title, $body);
+
+exit 0;

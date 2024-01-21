@@ -143,6 +143,18 @@ sub copyCore
 	}
 }
 
+sub copyRoselia
+{
+	my ($txt) = @_;
+
+	open(my $pipe, '|-', "$SCRIPT_DIR/extra/roselia-copy");
+	print $pipe $txt;
+	close($pipe);
+
+	return 0 if ($? != 0);
+	return 1;
+}
+
 sub copyAll
 {
 	my ($txt, $limit) = @_;
@@ -151,6 +163,12 @@ sub copyAll
 	if ($len < $limit) {
 		copyCore($txt);
 
+		print("Text sent to clipboard.\n");
+
+		return 0;
+	}
+
+	if (copyRoselia($txt)) {
 		print("Text sent to clipboard.\n");
 
 		return 0;

@@ -1,0 +1,105 @@
+#!/usr/bin/env perl
+
+use warnings;
+use strict;
+
+use POSIX;
+use File::Basename;
+use Data::Dumper;
+use Getopt::Long;
+use JSON::PP;
+use HTTP::Tiny;
+
+my $SCRIPT_DIR = dirname(__FILE__);
+
+sub help
+{
+	my ($exitval) = @_;
+
+	my $prog = basename($0);
+
+	my $help = <<"EOF";
+roselia-probe v1.0.0
+Jiyuan Zhang <jiyuanz3\@illinois.edu>
+
+roselia-probe is a server prober for the Roselia shell co-protocol.
+
+Roselia is a REST API protocol for shell rich experience.
+
+USAGE:
+    $prog
+
+OPTIONS:
+    -h, -?, --help
+        Show this help.
+
+OUTPUT:
+    The Roselia server endpoint.
+
+EXIT STATUS:
+    0   The requested action was successfully performed.
+
+    1   Invalid command-line usage.
+
+    2   Failed to probe a server.
+
+EOF
+	print($help);
+
+	if ($exitval =~ /^\d+$/) {
+		exit $exitval;
+	}
+
+	exit 0;
+}
+
+sub getClientFromEnv
+{
+	my ($var) = @_;
+
+	my $val = $ENV{$var};
+	unless (defined($val) && ($val ne "")) {
+		return "";
+	}
+
+	if ($val =~ /^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s+/gm) {
+		return $1;
+	}
+
+	return "";
+}
+
+sub getClient
+{
+	my $ret = getClientFromEnv("SSH_CONNECTION");
+	return $ret unless $ret eq "";
+
+	$ret = getClientFromEnv("SSH_CLIENT");
+	return $ret unless $ret eq "";
+
+	return "";
+}
+
+sub probeConnection
+{
+	my ($ep) = @_;
+
+	my $response = HTTP::Tiny->new(timeout => 1)->get("$ep/version");
+
+	return ($response->{success}) && ($response->{status} == 200) && ($response->{content} =~ /^Roselia\b/);
+}
+
+GetOptions(
+	'help|?' => \&help,
+) or help(1);
+
+my $client = getClient();
+
+exit 2 if $client eq "";
+
+my $endpoint = "http://$client:70";
+
+exit 2 unless probeConnection($endpoint);
+
+print($endpoint);
+exit 0;

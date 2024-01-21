@@ -1,5 +1,27 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
-printf '\a'
-sleep 1
-printf '\a'
+SCRIPT_DIR=$(dirname "$(realpath -e "${BASH_SOURCE[0]:-$0}")")
+
+function do_alert {
+	if [ "$#" -gt 0 ]; then
+		echo
+		tput sitm setaf 9
+		echo "NOTIFICATION MESSAGE:"
+		tput sgr0
+		tput setaf 9
+		printf '    %s\n' "$@"
+		tput sgr0
+	fi
+}
+
+function do_bell {
+	printf '\a'
+	sleep 1
+	printf '\a'
+	sleep 1
+	printf '\a'
+}
+
+do_alert "$@"
+
+"$SCRIPT_DIR/extra/roselia-alert" "$@" || do_bell "$@"
