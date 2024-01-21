@@ -125,7 +125,7 @@ GetOptions(
 
 	'tag=s' => \(my $tag = "latest"),
 	'1!' => \(my $onlyFirst = 0),
-) or help(0);
+) or help(1);
 
 if (scalar(@ARGV) < 1 || scalar(@ARGV) > 2) {
 	help(1);

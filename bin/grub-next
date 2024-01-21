@@ -336,7 +336,7 @@ GetOptions(
 	'persistent!' => \(my $persistent = 0),
 	'show!' => \(my $detail = 0),
 	'verbose+' => \(my $verbose = 0),
-) or help(0);
+) or help(1);
 
 # Current mode, just show the current entry and quit
 if ($current == 1) {
