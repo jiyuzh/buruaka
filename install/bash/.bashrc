@@ -137,7 +137,7 @@ PS1='\n'
 ____add_ps1 '$(date +%T)' 245 232
 ____add_ps1 '$(hostname)' 232 226
 ____add_ps1 '$USER' 231 196
-____add_ps1 '$(pwd)' 231 200
+____add_ps1 '$PWD' 231 200
 ____add_ps1 '$(____git_branch)' 232 118
 ____add_ps1 '' 257 257
 PS1+='\n\$ '
