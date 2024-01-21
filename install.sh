@@ -295,6 +295,9 @@ function install_grub_conf {
 	copy_path "$SCRIPT_DIR/install/grub/grub.default" "/etc/default/grub" 1 1
 	reflect_file "grub" "grub_default" "/etc/default/grub"
 	sudo update-grub
+
+	# So that we don't need to mess sudo PATHs
+	sudo ln -s "$SCRIPT_DIR/bin/grub-next" "/usr/local/sbin/grub-next"
 }
 
 function install_ssh_conf {
