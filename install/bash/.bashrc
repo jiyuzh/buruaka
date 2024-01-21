@@ -80,9 +80,15 @@ alias g='____cdls_forward'
 alias gg='____cdls_bachward'
 alias ggg='____cdls_history'
 
-alias vi='micro'
-alias grep='rg'
-alias cat='bat --style=plain'
+if command -v micro &> /dev/null; then
+	alias vi='micro'
+fi
+if command -v rg &> /dev/null; then
+	alias grep='rg'
+fi
+if command -v bat &> /dev/null; then
+	alias cat='bat --style=plain'
+fi
 alias diff='____diff'
 
 # Better history
