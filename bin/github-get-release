@@ -36,6 +36,13 @@ ARGS:
         matched results will be returned.
 
 OPTIONS:
+    -e, --exact
+        Use exact match mode. Only the release with the given tag name will
+        be processed.
+
+        When running without this option, all releases below the specified
+        tag version will be processed.
+
     -h, -?, --help
         Show this help.
 
@@ -70,13 +77,18 @@ EOF
 
 sub fetchGithubApi
 {
-	my ($repo, $tag) = @_;
+	my ($repo, $tag, $exact) = @_;
 
 	my $url = "https://api.github.com/repos/$repo/releases/$tag";
 	if ($tag ne "latest") {
 		# Tag URL is weird, it use /tag/ for UI but /tags/ for API
 		# So we just append it automatically rather than ask users to do it
 		$url = "https://api.github.com/repos/$repo/releases/tags/$tag";
+	}
+
+	if (!$exact) {
+		# Fetch the full release list, note the format is different
+		$url = "https://api.github.com/repos/$repo/releases";
 	}
 
 	my $response = HTTP::Tiny->new->get($url);
@@ -88,12 +100,9 @@ sub fetchGithubApi
 	return $response->{content};
 }
 
-sub parseApiJson
+sub parseApi
 {
-	my ($json) = @_;
-
-	my $data = decode_json($json);
-	my @result;
+	my ($data, @result) = @_;
 
 	foreach my $asset ( @{ $data->{assets} } ) {
 		push(@result, $asset->{browser_download_url});
@@ -102,9 +111,39 @@ sub parseApiJson
 	return @result;
 }
 
+sub parseApiJson
+{
+	my ($json) = @_;
+
+	my @result;
+
+	return parseApi(decode_json($json), @result);
+}
+
+sub parseApiJsonArray
+{
+	my ($json, $tag) = @_;
+
+	my $dataList = decode_json($json);
+	my @result;
+	my $seenTag = $tag eq "latest";
+
+	foreach my $data ( @{ $dataList } ) {
+		if (!$seenTag && ($tag ne $data->{tag_name})) {
+			next;
+		}
+
+		$seenTag = 1;
+
+		@result = parseApi($data, @result);
+	}
+
+	return @result;
+}
+
 sub filterDownloadEntry
 {
-	my ($pattern, @entries) = @_;
+	my ($pattern, $onlyFirst, @entries) = @_;
 
 	my @result;
 
@@ -114,6 +153,8 @@ sub filterDownloadEntry
 
 		if ($filename =~ /$pattern/gm ) {
 			push(@result, $download);
+
+			return @result if $onlyFirst;
 		}
 	}
 
@@ -123,6 +164,7 @@ sub filterDownloadEntry
 GetOptions(
 	'help|?' => \&help,
 
+	'exact!' => \(my $exact = 0),
 	'tag=s' => \(my $tag = "latest"),
 	'1!' => \(my $onlyFirst = 0),
 ) or help(1);
@@ -138,18 +180,21 @@ if (scalar(@ARGV) == 2) {
 	$pattern = $ARGV[1];
 }
 
-my $apiJson = fetchGithubApi($repo, $tag);
-my @downloads = parseApiJson($apiJson);
-my @results = filterDownloadEntry($pattern, @downloads);
+my $apiJson = fetchGithubApi($repo, $tag, $exact);
+
+my @downloads;
+if ($exact) {
+	@downloads = parseApiJson($apiJson);
+}
+else {
+	@downloads = parseApiJsonArray($apiJson, $tag);
+}
+
+my @results = filterDownloadEntry($pattern, $onlyFirst, @downloads);
 
 # No matched URL found
 if (!scalar(@results)) {
 	exit 2;
-}
-
-if ($onlyFirst) {
-	print("$results[0]\n");
-	exit 0;
 }
 
 foreach my $disp (@results) {
