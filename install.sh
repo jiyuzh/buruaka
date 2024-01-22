@@ -121,7 +121,7 @@ function install_kernbuild {
 function install_dotnet {
 	# I love Microsoft
 	sudo wget https://dot.net/v1/dotnet-install.sh -O /opt/dotnet-install.sh
-	sudo chmod +x /opt/dotnet-install.sh
+	sudo chmod -c +x /opt/dotnet-install.sh
 	sudo /opt/dotnet-install.sh --version latest --install-dir /opt/dotnet/
 	if sudo test -e "/opt/dotnet/dotnet"; then
 		sudo ln -s /opt/dotnet/dotnet /usr/local/bin/dotnet
@@ -167,7 +167,7 @@ function install_delta {
 	if sudo test ! -e "$HOME/.gitconfig"; then
 		sudo mkdir -vp "$HOME"
 		sudo touch "$HOME/.gitconfig"
-		sudo chown -R "$USER:$USER" "$HOME/.gitconfig"
+		sudo chown -c "$USER:$USER" "$HOME/.gitconfig"
 	fi
 
 	if ! sudo grep -Fq 'pager = delta' "$HOME/.gitconfig"; then
@@ -207,7 +207,7 @@ function install_bat {
 
 function install_moar {
 	sudo wget -O /usr/local/bin/moar "$("$SCRIPT_DIR/bin/github-get-release" -1 walles/moar 'moar-.*-linux-386')"
-	sudo chmod +x /usr/local/bin/moar
+	sudo chmod -c +x /usr/local/bin/moar
 }
 
 function install_tmux {
@@ -232,7 +232,7 @@ function install_bash_conf {
 	if sudo test ! -e "$HOME/.bashrc"; then
 		sudo mkdir -vp "$HOME"
 		sudo touch "$HOME/.bashrc"
-		sudo chown -R "$USER:$USER" "$HOME/.bashrc"
+		sudo chown -c "$USER:$USER" "$HOME/.bashrc"
 	fi
 
 	if ! sudo grep -Fq 'if [ -f ~/.bashrc_jz ]; then' "$HOME/.bashrc"; then
@@ -245,7 +245,7 @@ END
 
 	# generate from template
 	copy_path "$SCRIPT_DIR/install/bash/.bashrc_jz.tmpl" "$SCRIPT_DIR/install/bash/.bashrc_jz" 1 1
-	sed -i "s@{{buruaka}}@$SCRIPT_DIR@g" "$SCRIPT_DIR/install/bash/.bashrc_jz"
+	perl -i -pe "s@{{buruaka}}@$SCRIPT_DIR@gm" "$SCRIPT_DIR/install/bash/.bashrc_jz"
 
 	deploy_file "bash" ".bashrc_jz" "$HOME/.bashrc_jz"
 }
@@ -306,7 +306,7 @@ function install_ssh_conf {
 		sudo touch "$HOME/.ssh/config"
 	fi
 
-	sudo chown -R "$USER:$USER" "$HOME/.ssh/"
+	sudo chown -cR "$USER:$USER" "$HOME/.ssh/"
 
 	if ! sudo grep -Fq "Host github.deanon" "$HOME/.ssh/config"; then
 		cat << 'END' >> "$HOME/.ssh/config"
@@ -323,7 +323,7 @@ END
 		nano "$HOME/.ssh/id_ed25519_unsafe"
 	fi
 
-	chmod 600 "$HOME/.ssh/"*
+	chmod -c 0600 "$HOME/.ssh/"*
 
 	pip3 install ssh-import-id
 	ssh-import-id gh:jiyuzh
