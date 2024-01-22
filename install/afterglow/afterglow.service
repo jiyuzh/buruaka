@@ -1,0 +1,21 @@
+[Unit]
+Description=Afterglow Continuation Service by Jiyuan Zhang
+After=getty.target machines.target network-online.target systemd-user-sessions.service openvpn-client@jzbridge.service
+Wants=getty.target machines.target network-online.target systemd-user-sessions.service
+ConditionPathExists=!/etc/afterglow/do_not_start
+
+[Service]
+EnvironmentFile=-/etc/afterglow/env
+ExecStart=/usr/local/sbin/afterglow-bootstrap
+Restart=on-failure
+RestartPreventExitStatus=255
+Type=notify
+KillMode=process
+User=root
+Group=root
+StateDirectory=afterglow
+LogsDirectory=afterglow
+ConfigurationDirectory=afterglow
+
+[Install]
+WantedBy=multi-user.target

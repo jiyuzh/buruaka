@@ -1,0 +1,10 @@
+# Default environment values for Afterglow
+
+# The environment variable values listed here will be applied to the
+# Afterglow framework and its decendants. This also include user specified
+# tasks, if not overwridden by individual task configurations.
+
+BURUAKA="{{buruaka}}"
+TZ=America/Chicago
+LANG=en_US.UTF-8
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:{{buruaka}}"

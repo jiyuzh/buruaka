@@ -59,7 +59,11 @@ fi
 # Parameters:
 # 	$1: Package name.
 # 	$2: File name.
-# 	$3: Target path,
+# 	$3: Target path.
+function system_file {
+	link_path "$SCRIPT_DIR/install/$1/$2" "$3" 1 1
+}
+
 function deploy_file {
 	link_path "$SCRIPT_DIR/install/$1/$2" "$3" 1 0
 }
@@ -342,6 +346,19 @@ function install_kcompile {
 	git pull
 	popd
 	popd
+}
+
+function install_afterglow {
+	system_file "afterglow" "afterglow-bootstrap" "/usr/local/sbin/afterglow-bootstrap"
+	system_file "afterglow" "afterglow.service" "/etc/systemd/system/afterglow.service"
+	system_file "afterglow" "env" "/etc/afterglow/env"
+
+	perl -i -pe "s@{{buruaka}}@$SCRIPT_DIR@gm" "$SCRIPT_DIR/install/afterglow/env"
+
+	sudo systemctl daemon-reload
+	sudo systemctl enable afterglow.service
+	sudo systemctl restart afterglow.service
+	sudo systemctl status afterglow.service
 }
 
 help_mode=0

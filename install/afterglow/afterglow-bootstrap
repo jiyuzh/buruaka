@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+if ! command -v perl &> /dev/null; then
+	exit 255
+fi
+
+if [ -z "$BURUAKA" ] || [ ! -d "$BURUAKA" ]; then
+	exit 255
+fi
+
+if [ ! -f "$BURUAKA/bin/extra/afterglow-core" ] || [ ! -x "$BURUAKA/bin/extra/afterglow-core" ]; then
+	exit 255
+fi
+
+exec /usr/bin/env perl "$BURUAKA/bin/extra/afterglow-core"
