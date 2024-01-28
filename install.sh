@@ -299,9 +299,6 @@ function install_grub_conf {
 	copy_path "$SCRIPT_DIR/install/grub/grub.default" "/etc/default/grub" 1 1
 	reflect_file "grub" "grub_default" "/etc/default/grub"
 	sudo update-grub
-
-	# So that we don't need to mess sudo PATHs
-	sudo ln -s "$SCRIPT_DIR/bin/grub-next" "/usr/local/sbin/grub-next"
 }
 
 function install_ssh_conf {
@@ -352,6 +349,7 @@ function install_kcompile {
 }
 
 function install_afterglow {
+	# Afterglow Continuation Service
 	system_file "afterglow" "afterglow-bootstrap" "/usr/local/sbin/afterglow-bootstrap"
 	system_file "afterglow" "afterglow.service" "/etc/systemd/system/afterglow.service"
 	system_file "afterglow" "env" "/etc/afterglow/env"
@@ -362,6 +360,14 @@ function install_afterglow {
 	sudo systemctl enable afterglow.service
 	sudo systemctl restart afterglow.service
 	sudo systemctl status afterglow.service
+}
+
+function install_popipa {
+	# Poppin'Party Utils (./bin/*)
+
+	pushd "$SCRIPT_DIR/bin"
+	sudo find . -maxdepth 1 -type f -executable -exec ln -vTsi "$SCRIPT_DIR/bin/{}" "/usr/local/sbin/{}" \;;
+	popd
 }
 
 help_mode=0

@@ -75,7 +75,6 @@ ____diff () {
 
 alias ls='ls --color=auto'
 alias ll='ls -alhF'
-alias e='sudo -E'
 
 alias g='____cdls_forward'
 alias gg='____cdls_bachward'
