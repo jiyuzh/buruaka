@@ -75,6 +75,7 @@ ____diff () {
 
 alias ls='ls --color=auto'
 alias ll='ls -alhF'
+alias e='sudo -E'
 
 alias g='____cdls_forward'
 alias gg='____cdls_bachward'
@@ -203,6 +204,9 @@ PROMPT_COMMAND="${PROMPT_COMMAND}"$'\n'"____post_exec;";
 # Idempotence
 if [[ -z "$BURUAKA_INIT_ONCE" ]]; then
 	export BURUAKA_INIT_ONCE=1
+
+	export BURUAKA="$____buruaka"
+	export BURU="$____buruaka/bin"
 
 	# Nothing here yet
 fi
