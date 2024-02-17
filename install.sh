@@ -334,7 +334,7 @@ END
 	ssh-import-id gh:jiyuzh
 
 	# Now we can use ssh auth for buruaka repo
-	"$SCRIPT_DIR/bin/extra/fixup-buruaka"
+	"$SCRIPT_DIR/bin/extra/buruaka-fixup"
 }
 
 function install_kcompile {
@@ -367,7 +367,7 @@ function install_popipa {
 	# Poppin'Party Utils (./bin/*)
 
 	pushd "$SCRIPT_DIR/bin"
-	sudo find . -maxdepth 1 -type f -executable -exec ln -vTsi "$SCRIPT_DIR/bin/buruaka-forward" "/usr/local/sbin/{}" \;;
+	sudo find . -maxdepth 1 -type f -executable -exec ln -vTsi "$SCRIPT_DIR/bin/extra/buruaka-forward" "/usr/local/sbin/{}" \;;
 	popd
 }
 

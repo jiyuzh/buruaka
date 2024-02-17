@@ -9,7 +9,16 @@ SCRIPT_NAME=$(basename "$SCRIPT_PATH")
 TOOL_NAME=$(basename "$(realpath -se "${BASH_SOURCE[0]:-$0}")")
 
 function help {
-	true
+	cat << EOF
+buruaka-forward
+
+Forward commands to buruaka binaries.
+
+USAGE:
+    buruaka-forward BIN_NAME ARGS
+    SYMLINK_WITH_BIN_NAME ARGS
+
+EOF
 }
 
 # Resolve the binary folder
