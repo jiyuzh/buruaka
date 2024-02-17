@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPT_PATH=$(realpath -e "${BASH_SOURCE[0]:-$0}")
+SCRIPT_DIR=$(dirname "$SCRIPT_PATH")
+SCRIPT_NAME=$(basename "$SCRIPT_PATH")
+
+TOOL_NAME=$(basename "$(realpath -se "${BASH_SOURCE[0]:-$0}")")
+
+function help {
+	true
+}
+
+# Resolve the binary folder
+
+BURU_PATH="$SCRIPT_DIR"
+
+if [ -n "${BURUAKA:-}" ] && [ -e "$BURUAKA/bin" ] &> /dev/null; then
+	BURU_PATH="$BURUAKA/bin"
+elif [ -f /tmp/buruaka/BURUAKA ] && [ -e "$(cat /tmp/buruaka/BURUAKA)/bin" ] &> /dev/null; then
+	BURU_PATH="$(cat /tmp/buruaka/BURUAKA)/bin"
+fi
+
+BURU_PATH="$(realpath -e "$BURU_PATH")"
+
+if [ ! -d "$BURU_PATH" ]; then
+	echo "Failed to locate the BURUAKA binary folder"
+	exit 1
+fi
+
+# Support using the first parameter as the binary name
+
+if [ "$SCRIPT_NAME" = "$TOOL_NAME" ]; then
+	if [ "$#" -lt 1 ]; then
+		help
+		exit 1
+	fi
+
+	TOOL_NAME="$1"
+	shift
+fi
+
+TOOL_PATH="$BURU_PATH/$TOOL_NAME"
+
+# Recursion check
+
+if [ -L "$TOOL_PATH" ]; then
+	TOOL_PATH=$(realpath -e "$(readlink -f "$TOOL_PATH")")
+fi
+
+if [ "$TOOL_PATH" = "$SCRIPT_PATH" ]; then
+	echo "Tool '$TOOL_NAME' is an alias of '$SCRIPT_NAME', abort recursion"
+	exit 1
+fi
+
+# Invoke
+
+"$TOOL_PATH" "$@"

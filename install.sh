@@ -367,7 +367,7 @@ function install_popipa {
 	# Poppin'Party Utils (./bin/*)
 
 	pushd "$SCRIPT_DIR/bin"
-	sudo find . -maxdepth 1 -type f -executable -exec ln -vTsi "$SCRIPT_DIR/bin/{}" "/usr/local/sbin/{}" \;;
+	sudo find . -maxdepth 1 -type f -executable -exec ln -vTsi "$SCRIPT_DIR/bin/buruaka-forward" "/usr/local/sbin/{}" \;;
 	popd
 }
 
