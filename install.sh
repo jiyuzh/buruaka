@@ -156,6 +156,7 @@ function install_ripgrep {
 	# Nice little grep tool with sane regex
 	sudo apt-get update
 	sudo apt-get install -y ripgrep
+	# sudo snap install ripgrep --classic # shall we try snap?
 
 	export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
 
@@ -249,7 +250,7 @@ END
 
 	# generate from template
 	copy_path "$SCRIPT_DIR/install/bash/.bashrc_jz.tmpl" "$SCRIPT_DIR/install/bash/.bashrc_jz" 1 1
-	perl -i -pe "s@{{buruaka}}@$SCRIPT_DIR@gm" "$SCRIPT_DIR/install/bash/.bashrc_jz"
+	perl -i -pe "s@\\{\\{buruaka\\}\\}@$SCRIPT_DIR@gm" "$SCRIPT_DIR/install/bash/.bashrc_jz"
 
 	deploy_file "bash" ".bashrc_jz" "$HOME/.bashrc_jz"
 }
@@ -292,7 +293,7 @@ function install_grub_conf {
 	fi
 
 	if sudo test -f "/etc/grub.d/10_linux"; then
-		copy_path "/etc/grub.d/10_linux" "$SCRIPT_DIR/reflect/grub/10_linux.bak.$TS" 1 1
+		copy_path "/etc/grub.d/10_linux" "$SCRIPT_DIR/reflect/grub/10_linux.bak.$TS" 1 0
 		sudo patch -l /etc/grub.d/10_linux "$SCRIPT_DIR/install/grub/10_linux.patch"
 	fi
 
