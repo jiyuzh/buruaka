@@ -53,6 +53,17 @@ EOF
 	exit 0;
 }
 
+sub readAllText
+{
+	my ($path) = @_;
+
+	open my $fd, $path or die "Could not open $path: $!\n";
+	my $text = do { local $/; <$fd> };
+	close($fd);
+
+	return $text;
+}
+
 sub getClientFromEnv
 {
 	my ($var) = @_;
@@ -69,12 +80,32 @@ sub getClientFromEnv
 	return "";
 }
 
+sub getClientFromFile
+{
+	my ($path) = @_;
+
+	unless (-f $path) {
+		return "";
+	}
+
+	my $val = readAllText($path);
+
+	if ($val =~ /^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s+/gm) {
+		return $1;
+	}
+
+	return "";
+}
+
 sub getClient
 {
 	my $ret = getClientFromEnv("SSH_CONNECTION");
 	return $ret unless $ret eq "";
 
 	$ret = getClientFromEnv("SSH_CLIENT");
+	return $ret unless $ret eq "";
+
+	$ret = getClientFromFile("/tmp/buruaka/SSH_CONNECTION");
 	return $ret unless $ret eq "";
 
 	return "";

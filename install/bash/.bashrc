@@ -207,5 +207,5 @@ if [[ -z "$BURUAKA_INIT_ONCE" ]]; then
 	export BURUAKA="$____buruaka"
 	mkdir -p /tmp/buruaka
 	echo "$BURUAKA" > /tmp/buruaka/BURUAKA
-	# Nothing here yet
+	echo "$SSH_CONNECTION" > /tmp/buruaka/SSH_CONNECTION
 fi
