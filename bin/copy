@@ -147,9 +147,11 @@ sub copyRoselia
 {
 	my ($txt) = @_;
 
-	open(my $pipe, '|-', "$SCRIPT_DIR/extra/roselia-copy");
+	$SIG{PIPE} = "IGNORE";
+	open(my $pipe, '|-', "$SCRIPT_DIR/extra/roselia-copy") or return 0;
 	print $pipe $txt;
 	close($pipe);
+	$SIG{PIPE} = 'DEFAULT';
 
 	return 0 if ($? != 0);
 	return 1;
