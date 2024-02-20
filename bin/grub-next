@@ -4,6 +4,7 @@ use warnings;
 use strict;
 
 use File::Basename;
+use File::Spec;
 use Data::Dumper;
 use Getopt::Long;
 use Pod::Usage;
@@ -55,11 +56,16 @@ OPTIONS:
 
         The default value is: 0
 
+    -k, --kexec
+        Setup kexec instead of GRUB. This also affects --reboot.
+
     -l, --list
         List all bootable entries.
 
     -p, --persistent
         The boot entry choice shall be preserved across multiple reboot.
+
+        This option cannot be used with --kexec.
 
     -r, --reboot
         Reboot the machine automatically. An interactive confirmation is required.
@@ -68,8 +74,10 @@ OPTIONS:
         Display the content of the selected boot entry and quit without changing
         system settings.
 
-    -v, -vv
+    -v, --verbose <LEVEL>
         Change the verbosity of the program output.
+
+        The default value is: 0
 
     -y, --yes
         Answer yes or use default values for interactive prompts.
@@ -82,7 +90,7 @@ EXIT STATUS:
 
     1   Invalid command-line usage.
 
-    2   Given boot entry is not found.
+    2   Given boot entry is not found or invalid.
 
     3   System setting change failed.
 
@@ -187,8 +195,15 @@ sub parseGrubCfg
 
 sub strGrubEntry
 {
-	my ($entry) = @_;
-	return sprintf("%-10s %s", "[$entry->{pos}]", $entry->{name});
+	my ($entry, $indented) = @_;
+
+	my $format = "%s %s";
+
+	if ($indented) {
+		$format = "%-10s %s";
+	}
+
+	return sprintf($format, "[$entry->{pos}]", $entry->{name});
 }
 
 sub listGrubEntry
@@ -199,7 +214,7 @@ sub listGrubEntry
 	print("\n") if ($verbose >= 1);
 
 	foreach my $entry (@entries) {
-		printf("%3d. %s\n", $idx, strGrubEntry($entry));
+		printf("%3d. %s\n", $idx, strGrubEntry($entry, 1));
 		$idx++;
 	}
 }
@@ -208,13 +223,13 @@ sub filterGrubEntry
 {
 	my ($verbose, $pattern, @entries) = @_;
 
-	print("Filtering entries with PCRE pattern: /$pattern/gm") if ($verbose >= 1);
+	print("Filtering entries with PCRE pattern: /$pattern/m") if ($verbose >= 1);
 
 	my @result;
 
 	foreach my $entry (@entries) {
 		# Only filter on human_name and id_expr as they are stable
-		if ($entry->{name} =~ /$pattern/gm || $entry->{fqn} =~ /$pattern/gm) {
+		if ($entry->{name} =~ /$pattern/m || $entry->{fqn} =~ /$pattern/m) {
 			push(@result, $entry);
 		}
 	}
@@ -226,7 +241,7 @@ sub filterGrubEntry
 	return @result;
 }
 
-sub showGrubBoot
+sub extractGrubBoot
 {
 	my ($verbose, $path, $entry) = @_;
 
@@ -255,7 +270,69 @@ sub showGrubBoot
 		}
 	}
 
-	print($text);
+	return $text;
+}
+
+sub showGrubBoot
+{
+	my ($verbose, $path, $entry) = @_;
+
+	print(extractGrubBoot($verbose, $path, $entry));
+}
+
+sub unescapeGrubString
+{
+	my ($str) = @_;
+
+	my $out = `echo $str`;
+	$out =~ s/\n//gm;
+
+	return $out;
+}
+
+sub parseGrubBoot
+{
+	my ($verbose, $path, $entry) = @_;
+
+	my $text = extractGrubBoot($verbose, $path, $entry);
+
+	my $initrd = "";
+	my $linux = "";
+	my $param = "";
+	my $uuid = "";
+
+	print("Extracting boot parameter from GRUB entry " . strGrubEntry($entry, 0) . "\n") if ($verbose >= 1);
+	print("\n--- Begin GRUB menu content---\n$text\n--- End GRUB menu content---\n\n") if ($verbose >= 2);
+
+	# The boot partition search line
+	if ($text =~ /^\h*search(?=.*--fs-uuid)(?=.*--set=root).*\h([0-9a-fA-F\-]{36})(?:\h|$)/m) {
+		$uuid = $1;
+	}
+	else {
+		print("Unable to extract disk partition UUID from GRUB entry\n");
+		return (0, $uuid, $linux, $initrd, $param);
+	}
+
+	# The linux kernel line
+	if ($text =~ /^\h*linux\h+((?:'[^']+'|"(?:[^"]|\\")+"|[^\s]+)+)(?:\h+(.*))?$/m) {
+		$linux = unescapeGrubString($1);
+		$param = unescapeGrubString($2);
+	}
+	else {
+		print("Unable to extract linux kernel cmdline from GRUB entry\n");
+		return (0, $uuid, $linux, $initrd, $param);
+	}
+
+	# The initrd image line
+	if ($text =~ /^\h*initrd\h+((?:'[^']+'|"(?:[^"]|\\")+"|[^\s]+)+)\h*$/m) {
+		$initrd = unescapeGrubString($1);
+	}
+	else {
+		print("Unable to extract initrd path from GRUB entry\n");
+		return (0, $uuid, $linux, $initrd, $param);
+	}
+
+	return (1, $uuid, $linux, $initrd, $param);
 }
 
 sub selectGrubBoot
@@ -269,7 +346,7 @@ sub selectGrubBoot
 	# Dryrun, we may use `true` to call the real routine but it will trigger post-validation error
 	if ($dryrun != 0) {
 		print("\n") if ($verbose >= 1);
-		print("Dry run boot entry is: " . strGrubEntry($entry) . "\n");
+		print("Dry run boot entry is: " . strGrubEntry($entry, 0) . "\n");
 
 		my $real = probeGrubEntry($verbose, $path);
 		print("Current active boot entry is: $real\n");
@@ -292,12 +369,12 @@ sub selectGrubBoot
 		print("\n") if ($verbose >= 1);
 
 		if ($real eq $fqn) {
-			print("Set boot entry to: " . strGrubEntry($entry) . "\n");
+			print("Set boot entry to: " . strGrubEntry($entry, 0) . "\n");
 			print("Current active boot entry is: $real\n");
 			return 0;
 		}
 		else {
-			print("Unable to set boot entry to: " . strGrubEntry($entry) . "\n");
+			print("Unable to set boot entry to: " . strGrubEntry($entry, 0) . "\n");
 			print("Current active boot entry is: $real\n");
 			return 3;
 		}
@@ -306,10 +383,102 @@ sub selectGrubBoot
 		print("\n") if ($verbose >= 1);
 		print($output);
 		print("\n");
-		print("Failed to set boot entry to: " . strGrubEntry($entry) . "\n");
+		print("GRUB failed with return code $ret\n");
+		print("Failed to set boot entry to: " . strGrubEntry($entry, 0) . "\n");
 		print("Current active boot entry is: $real\n");
 		return 3;
 	}
+}
+
+sub resolveDiskUuid
+{
+	my ($verbose, $uuid) = @_;
+
+	my $mounts = `lsblk -o UUID,MOUNTPOINT`;
+
+	print("Extracting mounting point for disk UUID $uuid\n") if ($verbose >= 1);
+	print("\n--- Begin lsblk output---\n$mounts\n--- End lsblk output---\n\n") if ($verbose >= 2);
+
+	if ($mounts =~/^$uuid\h+(.*)$/m) {
+		return (1, $1);
+	}
+	
+	print("Unable to find mounting point of disk UUID $uuid\n");
+	return (0, "");
+}
+
+sub selectKexecBoot
+{
+	my ($verbose, $grubdir, $dryrun, $scripted, $entry) = @_;
+
+	# Collect boot parameters
+	my ($parsed, $uuid, $linux, $initrd, $param) = parseGrubBoot($verbose, $grubdir, $entry);
+	if (!$parsed) {
+		return 2;
+	}
+
+	# Because GRUB use path relative to partition root, we also need to parse the mount
+	my ($mounted, $root) = resolveDiskUuid($verbose, $uuid);
+	if (!$mounted) {
+		return 2;
+	}
+
+	# Quick and dirty check
+	$linux = File::Spec->canonpath("$root/$linux");
+	$initrd = File::Spec->canonpath("$root/$initrd");
+
+	if (! -f $linux || ! -f $initrd) {
+		print("Failed to locate required files:\n    linux = $linux\n    initrd = $initrd\n");
+		return 2;
+	}
+
+	# Kexec is not reliable enough to proceed without confirmation
+	print("Boot parameters:\n    linux = $linux\n    initrd = $initrd\n    cmdline = $param\n");
+
+	if ($scripted == 0) {
+		print("\nProceed to kexec? (y/n): ");
+
+		while (<STDIN>) {
+			if (/^y(es)?$/gmi) {
+				last;
+			}
+			elsif (/^n(o)?$/gmi) {
+				return 4;
+			}
+			else {
+				print("Please answer yes or no (y/n): ");
+			}
+		}
+	}
+
+	# Setup command line
+	$linux =~ s/'/'"'"'/g;
+	$initrd =~ s/'/'"'"'/g;
+	$param =~ s/'/'"'"'/g;
+
+	if ($dryrun != 0) {
+		print("\n") if ($verbose >= 1);
+		print("Dry run kexec command is: kexec -l '$linux' --initrd='$initrd' --command-line='$param'\n");
+		return 0;
+	}
+
+	my $output = `kexec -l '$linux' --initrd='$initrd' --command-line='$param'`;
+	my $ret = $?;
+
+	if ($ret == 0 && $output eq "") {
+		print("\n") if ($verbose >= 1);
+
+		print("Kexec success\n");
+	}
+	else {
+		print("\n") if ($verbose >= 1);
+		print($output);
+		print("\n");
+		print("Kexec failed with return value $ret\n");
+		return 3;
+	}
+
+	return 0;
 }
 
 sub probeGrubEntry
@@ -325,11 +494,11 @@ sub probeGrubEntry
 	close($grub_fh);
 
 	# This fallback order is from GRUB source code
-	if ($grub_text =~ /^\h*next_entry\h*=\h*(.+)\h*$/gm) {
+	if ($grub_text =~ /^\h*next_entry\h*=\h*(.+)\h*$/m) {
 		return $1;
 	}
 
-	if ($grub_text =~ /^\h*saved_entry\h*=\h*(.+)\h*$/gm) {
+	if ($grub_text =~ /^\h*saved_entry\h*=\h*(.+)\h*$/m) {
 		return $1;
 	}
 
@@ -338,7 +507,7 @@ sub probeGrubEntry
 
 sub doReboot
 {
-	my ($verbose, $dryrun, $scripted) = @_;
+	my ($verbose, $dryrun, $scripted, $kexec) = @_;
 
 	if ($scripted == 0) {
 		print("\nProceed to reboot? (y/n): ");
@@ -362,16 +531,25 @@ sub doReboot
 		return 0;
 	}
 
-	my $output = `reboot`;
+	my $output = "";
+	
+	if ($kexec) {
+		$output = `systemctl kexec`;
+	}
+	else {
+		$output = `reboot`;
+	}
 
-	if ($? == 0 && $output eq "") {
+	my $ret = $?;
+
+	if ($ret == 0 && $output eq "") {
 		return 0;
 	}
 	else {
 		print("\n") if ($verbose >= 1);
 		print($output);
 		print("\n");
-		print("Failed to reboot the machine\n");
+		print("Reboot failed with return code $ret\n");
 
 		return 3;
 	}
@@ -382,19 +560,20 @@ GetOptions(
 
 	'current!' => \(my $current = 0),
 	'dryrun!' => \(my $dryrun = 0),
-	'grubpath=s' => \(my $grub = "/boot/grub/"),
+	'grubpath=s' => \(my $grubdir = "/boot/grub/"),
 	'index|offset=i' => \(my $index = 0),
+	'kexec!' => \(my $kexec = 0),
 	'list!' => \(my $listmode = 0),
 	'persistent!' => \(my $persistent = 0),
 	'reboot!' => \(my $reboot = 0),
 	'show!' => \(my $detail = 0),
-	'verbose+' => \(my $verbose = 0),
+	'verbose=i' => \(my $verbose = 0),
 	'yes!' => \(my $scripted = 0),
 ) or help(1);
 
 # Current mode, just show the current entry and quit
 if ($current == 1) {
-	my $real = probeGrubEntry($verbose, $grub);
+	my $real = probeGrubEntry($verbose, $grubdir);
 	print("Current active boot entry is: $real\n");
 	exit 0;
 }
@@ -409,7 +588,7 @@ if (!$listmode && scalar(@ARGV) < 1) {
 	help(1);
 }
 
-my @all = parseGrubCfg($verbose, $grub);
+my @all = parseGrubCfg($verbose, $grubdir);
 
 # List all parsed entries if asked
 if ($listmode != 0 && scalar(@ARGV) < 1) {
@@ -444,18 +623,24 @@ my $ret = 0;
 
 # See if the user want to see the entry content or apply it
 if ($detail) {
-	showGrubBoot($verbose, $grub, $result[$index]);
+	showGrubBoot($verbose, $grubdir, $result[$index]);
+}
+elsif ($kexec) {
+	if ($persistent) {
+		print("Cannot persist kexec boot result\n");
+		exit 1;
+	}
+
+	$ret = selectKexecBoot($verbose, $grubdir, $dryrun, $scripted, $result[$index]);
 }
 else {
-	$ret = selectGrubBoot($verbose, $grub, $persistent, $dryrun, $result[$index]);
+	$ret = selectGrubBoot($verbose, $grubdir, $persistent, $dryrun, $result[$index]);
 }
 
 # If reboot is requested, do it
-if ($reboot) {
-	# But only do it either with user supervision or perfect execution
-	if ($scripted == 0 || $ret == 0) {
-		$ret = doReboot($verbose, $dryrun, $scripted);
-	}
+# But only do it either with user supervision or perfect execution
+if ($reboot && $ret == 0) {
+	$ret = doReboot($verbose, $dryrun, $scripted, $kexec);
 }
 
 exit $ret;
