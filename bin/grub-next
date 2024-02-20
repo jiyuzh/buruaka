@@ -110,7 +110,7 @@ sub parseGrubCfg
 
 	my $prev = 0;
 
-	while ($grub_text =~ /^\s*(?P<class>menuentry|submenu)\s+'(?P<name>[^']+)'\s+[^']+\s+'(?P<id>[^']+)'\s/gm) {
+	while ($grub_text =~ /^\h*(?P<class>menuentry|submenu)\h+'(?P<name>[^']+)'\h+[^']+\h+'(?P<id>[^']+)'\h/gm) {
 		my $class = $+{class};
 		my $name = $+{name};
 		my $id = $+{id};
@@ -314,11 +314,11 @@ sub probeGrubEntry
 	close($grub_fh);
 
 	# This fallback order is from GRUB source code
-	if ($grub_text =~ /^\s*next_entry\s*=\s*(.+)\s*$/gm) {
+	if ($grub_text =~ /^\h*next_entry\h*=\h*(.+)\h*$/gm) {
 		return $1;
 	}
 
-	if ($grub_text =~ /^\s*saved_entry\s*=\s*(.+)\s*$/gm) {
+	if ($grub_text =~ /^\h*saved_entry\h*=\h*(.+)\h*$/gm) {
 		return $1;
 	}
 
