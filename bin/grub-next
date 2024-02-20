@@ -41,10 +41,10 @@ OPTIONS:
     -d, --dryrun
         Run the program without changing system setting.
 
-    -g, --grub, --grubfile <PATH>
-        Specify the grub config file to work with.
+    -g, --grub, --grubpath <PATH>
+        Specify the grub environment folder to work with.
 
-        The default value is: /boot/grub/grub.cfg
+        The default value is: /boot/grub/
 
     -h, -?, --help
         Show this help.
@@ -101,6 +101,8 @@ sub parseGrubCfg
 	my $cursor = "ERR_SUBMENU_NULL";
 	my $submenu = "! Unknown submenu entry !";
 	my $offset = 0;
+
+	$path = $path . "/grub.cfg";
 
 	print("Parsing GRUB config file: $path") if ($verbose >= 1);
 
@@ -221,6 +223,8 @@ sub showGrubBoot
 
 	my $balance = 0;
 
+	$path = $path . "/grub.cfg";
+
 	open my $grub_fh, $path or die "Could not open $path: $!\n";
 	my $grub_text = do { local $/; <$grub_fh> };
 	close($grub_fh);
@@ -303,7 +307,7 @@ sub probeGrubEntry
 {
 	my ($verbose, $path) = @_;
 
-	$path = dirname($path) . "/grubenv";
+	$path = $path . "/grubenv";
 
 	print("Checking GRUB environment file: $path") if ($verbose >= 1);
 
@@ -328,7 +332,7 @@ GetOptions(
 
 	'current!' => \(my $current = 0),
 	'dryrun!' => \(my $dryrun = 0),
-	'grubfile=s' => \(my $grub = "/boot/grub/grub.cfg"),
+	'grubpath=s' => \(my $grub = "/boot/grub/"),
 	'index|offset=i' => \(my $index = 0),
 	'list!' => \(my $listmode = 0),
 	'persistent!' => \(my $persistent = 0),
