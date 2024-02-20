@@ -94,9 +94,9 @@ sub parseGrubCfg
 {
 	my ($verbose, $path) = @_;
 
-	my @idstack;
-	my @smstack;
-	my @ofstack;
+	my @fqnstack;
+	my @namstack;
+	my @posstack;
 	my @result;
 	my $cursor = "ERR_SUBMENU_NULL";
 	my $submenu = "! Unknown submenu entry !";
@@ -121,17 +121,17 @@ sub parseGrubCfg
 
 		foreach my $char (split('', $prefix)) {
 			if ($char eq '{') {
-				push(@idstack, $cursor);
+				push(@fqnstack, $cursor);
 				$cursor = "ERR_SUBMENU_NULL";
-				push(@smstack, $submenu);
+				push(@namstack, $submenu);
 				$submenu = "! Unknown submenu entry !";
-				push(@ofstack, $offset);
+				push(@posstack, $offset);
 				$offset = 0;
 			}
 			if ($char eq '}') {
-				$cursor = pop(@idstack);
-				$submenu = pop(@smstack);
-				$offset = pop(@ofstack);
+				$cursor = pop(@fqnstack);
+				$submenu = pop(@namstack);
+				$offset = pop(@posstack);
 			}
 		}
 
@@ -144,22 +144,25 @@ sub parseGrubCfg
 
 		# Menuentry, dump stack as a result
 		if ($class eq "menuentry") {
-			my @ids = @idstack;
-			push(@ids, $id);
-			my $fqn = join('>', @ids);
+			my @fqns = @fqnstack;
+			push(@fqns, $id);
+			my $fqn = join('>', @fqns);
 
-			my @sms = @smstack;
-			push(@sms, $name);
-			my $smn = join(' -> ', @sms);
+			my @nams = @namstack;
+			push(@nams, $name);
+			my $nam = join(' -> ', @nams);
 
-			my @ofs = @ofstack;
-			push(@ofs, $offset);
-			my $ofn = join('>', @ofs);
+			my @poss = @posstack;
+			push(@poss, $offset);
+			my $pos = join('>', @poss);
 
 			# We also keep the start position so we can extract content
-			# In the end: (human_name, id_expr, offset_expr, entry_start)
-			my @entry = ($smn, $fqn, $ofn, $-[0]);
-			push(@result, \@entry);
+			my %entry = (
+				"name" => $nam,
+				"fqn" => $fqn,
+				"pos" => $pos,
+				"text_start" => $-[0]);
+			push(@result, \%entry);
 		}
 
 		# TODO: This may be buggy with consecutive submenu
@@ -173,8 +176,8 @@ sub parseGrubCfg
 
 sub strGrubEntry
 {
-	my (@entry) = @_;
-	return "[$entry[2]] $entry[0]";
+	my ($entry) = @_;
+	return "[$entry->{pos}] $entry->{name}";
 }
 
 sub listGrubEntry
@@ -184,9 +187,8 @@ sub listGrubEntry
 
 	print("\n") if ($verbose >= 1);
 
-	foreach my $tmp (@entries) {
-		my @entry = @$tmp;
-		print("$idx. " . strGrubEntry(@entry) . "\n");
+	foreach my $entry (@entries) {
+		print("$idx. " . strGrubEntry($entry) . "\n");
 		$idx++;
 	}
 }
@@ -199,12 +201,10 @@ sub filterGrubEntry
 
 	my @result;
 
-	foreach my $tmp (@entries) {
-		my @entry = @$tmp;
-
+	foreach my $entry (@entries) {
 		# Only filter on human_name and id_expr as they are stable
-		if ($entry[0] =~ /$pattern/gm || $entry[1] =~ /$pattern/gm) {
-			push(@result, \@entry);
+		if ($entry->{name} =~ /$pattern/gm || $entry->{fqn} =~ /$pattern/gm) {
+			push(@result, $entry);
 		}
 	}
 
@@ -217,9 +217,8 @@ sub filterGrubEntry
 
 sub showGrubBoot
 {
-	my ($verbose, $path, $tmp) = @_;
+	my ($verbose, $path, $entry) = @_;
 
-	my @entry = @$tmp;
 	my $balance = 0;
 
 	open my $grub_fh, $path or die "Could not open $path: $!\n";
@@ -229,7 +228,7 @@ sub showGrubBoot
 	my $text = "";
 
 	# Take every thing before first '{' (entry header) and the paired '}' (entry body)
-	foreach my $char (split('', substr($grub_text, $entry[3]))) {
+	foreach my $char (split('', substr($grub_text, $entry->{text_start}))) {
 		$text .= $char;
 
 		if ($char eq '{') {
@@ -248,17 +247,16 @@ sub showGrubBoot
 
 sub selectGrubBoot
 {
-	my ($verbose, $path, $persistent, $dryrun, $tmp) = @_;
+	my ($verbose, $path, $persistent, $dryrun, $entry) = @_;
 
-	my @entry = @$tmp;
-	my $fqn = $entry[1];
+	my $fqn = $entry->{fqn};
 	my $output = "";
 	my $ret = 0;
 
 	# Dryrun, we may use `true` to call the real routine but it will trigger post-validation error
 	if ($dryrun != 0) {
 		print("\n") if ($verbose >= 1);
-		print("Dry run boot entry is: " . strGrubEntry(@entry) . "\n");
+		print("Dry run boot entry is: " . strGrubEntry($entry) . "\n");
 
 		my $real = probeGrubEntry($verbose, $path);
 		print("Current active boot entry is: $real\n");
@@ -280,13 +278,13 @@ sub selectGrubBoot
 	if ($ret == 0 && $output eq "") {
 		print("\n") if ($verbose >= 1);
 
-		if ($real eq $entry[1]) {
-			print("Set boot entry to: " . strGrubEntry(@entry) . "\n");
+		if ($real eq $fqn) {
+			print("Set boot entry to: " . strGrubEntry($entry) . "\n");
 			print("Current active boot entry is: $real\n");
 			return 0;
 		}
 		else {
-			print("Unable to set boot entry to: " . strGrubEntry(@entry) . "\n");
+			print("Unable to set boot entry to: " . strGrubEntry($entry) . "\n");
 			print("Current active boot entry is: $real\n");
 			return 3;
 		}
@@ -295,7 +293,7 @@ sub selectGrubBoot
 		print("\n") if ($verbose >= 1);
 		print($output);
 		print("\n");
-		print("Failed to set boot entry to: " . strGrubEntry(@entry) . "\n");
+		print("Failed to set boot entry to: " . strGrubEntry($entry) . "\n");
 		print("Current active boot entry is: $real\n");
 		return 3;
 	}
