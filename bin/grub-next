@@ -100,7 +100,7 @@ sub parseGrubCfg
 	my @result;
 	my $cursor = "ERR_SUBMENU_NULL";
 	my $submenu = "! Unknown submenu entry !";
-	my $offset = 0;
+	my $offset = -1;
 
 	$path = $path . "/grub.cfg";
 
@@ -128,7 +128,7 @@ sub parseGrubCfg
 				push(@namstack, $submenu);
 				$submenu = "! Unknown submenu entry !";
 				push(@posstack, $offset);
-				$offset = 0;
+				$offset = -1;
 			}
 			if ($char eq '}') {
 				$cursor = pop(@fqnstack);
@@ -136,6 +136,9 @@ sub parseGrubCfg
 				$offset = pop(@posstack);
 			}
 		}
+
+		# For each encountered entry, we increate the offset
+		$offset++;
 
 		# Submenu, setup stack frame and parse next
 		if ($class eq "submenu") {
@@ -163,12 +166,10 @@ sub parseGrubCfg
 				"name" => $nam,
 				"fqn" => $fqn,
 				"pos" => $pos,
-				"text_start" => $-[0]);
+				"text_start" => $-[0],
+			);
 			push(@result, \%entry);
 		}
-
-		# TODO: This may be buggy with consecutive submenu
-		$offset++;
 	}
 
 	print(" -> Loaded " . scalar(@result) . " bootable entries\n") if ($verbose >= 1);
@@ -179,7 +180,7 @@ sub parseGrubCfg
 sub strGrubEntry
 {
 	my ($entry) = @_;
-	return "[$entry->{pos}] $entry->{name}";
+	return sprintf("%-10s %s", "[$entry->{pos}]", $entry->{name});
 }
 
 sub listGrubEntry
@@ -190,7 +191,7 @@ sub listGrubEntry
 	print("\n") if ($verbose >= 1);
 
 	foreach my $entry (@entries) {
-		print("$idx. " . strGrubEntry($entry) . "\n");
+		printf("%3d. %s\n", $idx, strGrubEntry($entry));
 		$idx++;
 	}
 }
