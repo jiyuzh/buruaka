@@ -61,12 +61,18 @@ OPTIONS:
     -p, --persistent
         The boot entry choice shall be preserved across multiple reboot.
 
+    -r, --reboot
+        Reboot the machine automatically. An interactive confirmation is required.
+
     -s, --show
         Display the content of the selected boot entry and quit without changing
         system settings.
 
     -v, -vv
         Change the verbosity of the program output.
+
+    -y, --yes
+        Answer yes or use default values for interactive prompts.
 
 OUTPUT:
     Status messages for human consumption.
@@ -79,6 +85,8 @@ EXIT STATUS:
     2   Given boot entry is not found.
 
     3   System setting change failed.
+
+    4   User cancelled planned operation.
 
 EOF
 	print($help);
@@ -328,6 +336,47 @@ sub probeGrubEntry
 	return "! Unknown boot entry !";
 }
 
+sub doReboot
+{
+	my ($verbose, $dryrun, $scripted) = @_;
+
+	if ($scripted == 0) {
+		print("\nProceed to reboot? (y/n): ");
+
+		while (<STDIN>) {
+			if (/^y(es)?$/gmi) {
+				last;
+			}
+			elsif (/^n(o)?$/gmi) {
+				return 4;
+			}
+			else {
+				print("Please answer yes or no (y/n): ");
+			}
+		}
+	}
+
+	if ($dryrun != 0) {
+		print("\n") if ($verbose >= 1);
+		print("Dry run machine will reboot now\n");
+		return 0;
+	}
+
+	my $output = `reboot`;
+
+	if ($? == 0 && $output eq "") {
+		return 0;
+	}
+	else {
+		print("\n") if ($verbose >= 1);
+		print($output);
+		print("\n");
+		print("Failed to reboot the machine\n");
+
+		return 3;
+	}
+}
+
 GetOptions(
 	'help|?' => \&help,
 
@@ -337,8 +386,10 @@ GetOptions(
 	'index|offset=i' => \(my $index = 0),
 	'list!' => \(my $listmode = 0),
 	'persistent!' => \(my $persistent = 0),
+	'reboot!' => \(my $reboot = 0),
 	'show!' => \(my $detail = 0),
 	'verbose+' => \(my $verbose = 0),
+	'yes!' => \(my $scripted = 0),
 ) or help(1);
 
 # Current mode, just show the current entry and quit
@@ -376,8 +427,14 @@ if ($listmode != 0) {
 }
 
 # Pick the choosen one
-if ($index >= scalar(@result)) {
-	print("ERROR: Invalid index value $index\n");
+my $totalent = scalar(@result);
+if ($index >= $totalent) {
+	if ($totalent == 0) {
+		print("No available entry found\n");
+	}
+	else {
+		print("Invalid index value $index for $totalent entries\n");
+	}
 	exit 2;
 }
 
@@ -391,6 +448,14 @@ if ($detail) {
 }
 else {
 	$ret = selectGrubBoot($verbose, $grub, $persistent, $dryrun, $result[$index]);
+}
+
+# If reboot is requested, do it
+if ($reboot) {
+	# But only do it either with user supervision or perfect execution
+	if ($scripted == 0 || $ret == 0) {
+		$ret = doReboot($verbose, $dryrun, $scripted);
+	}
 }
 
 exit $ret;
