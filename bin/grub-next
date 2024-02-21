@@ -8,6 +8,7 @@ use File::Spec;
 use Data::Dumper;
 use Getopt::Long;
 use Pod::Usage;
+use Term::ReadLine;
 
 my $SCRIPT_DIR = dirname(__FILE__);
 
@@ -407,6 +408,14 @@ sub resolveDiskUuid
 	return (0, "");
 }
 
+sub editKexecCmdline
+{
+	my ($cmdline) = @_;
+
+	my $term = Term::ReadLine->new('grub-next-cmdline', \*STDIN, \*STDOUT);  
+	return $term->readline("New cmdline: ", $cmdline) ; 
+}
+
 sub selectKexecBoot
 {
 	my ($verbose, $grubdir, $dryrun, $scripted, $entry) = @_;
@@ -433,10 +442,10 @@ sub selectKexecBoot
 	}
 
 	# Kexec is not reliable enough to proceed without confirmation
-	print("Boot parameters:\n    linux = $linux\n    initrd = $initrd\n    cmdline = $param\n");
+	print("Current boot parameters:\n    linux = $linux\n    initrd = $initrd\n    cmdline = $param\n");
 
 	if ($scripted == 0) {
-		print("\nProceed to kexec? (y/n): ");
+		print("\nProceed to kexec or edit the cmdline? (y/n/e): ");
 
 		while (<STDIN>) {
 			if (/^y(es)?$/gmi) {
@@ -445,8 +454,13 @@ sub selectKexecBoot
 			elsif (/^n(o)?$/gmi) {
 				return 4;
 			}
+			elsif (/^e(dit)?$/gmi) {
+				$param = editKexecCmdline($param);
+				print("\nCurrent boot parameters:\n    linux = $linux\n    initrd = $initrd\n    cmdline = $param\n");
+				print("\nProceed to kexec or edit the cmdline? (y/n/e): ");
+			}
 			else {
-				print("Please answer yes or no (y/n): ");
+				print("Please answer yes or no or edit (y/n/e): ");
 			}
 		}
 	}
