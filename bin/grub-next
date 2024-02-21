@@ -19,7 +19,7 @@ sub help
 	my $prog = basename($0);
 
 	my $help = <<"EOF";
-grub-next v1.0.0
+grub-next v1.1.0
 Jiyuan Zhang <jiyuanz3\@illinois.edu>
 
 grub-next is a wrapper around grub-reboot which let you filter desired boot
