@@ -100,7 +100,7 @@ function install_core {
 	sudo apt-get update
 	sudo apt-get install -y bash curl git man perl perl-doc sudo wget screen vim nano software-properties-common zip unzip tar rsync parallel
 	sudo apt-get install -y python3 python3-dev python3-pip python3-venv
-	sudo apt-get install -y python3-userpath || pip3 install userpath
+	sudo apt-get install -ym python3-userpath || pip3 install userpath
 
 	if ! python3 -m userpath verify "$HOME/.local/bin"; then
 		python3 -m userpath append "$HOME/.local/bin"
@@ -118,8 +118,13 @@ function install_kernbuild {
 	sudo apt-get update
 	sudo apt-get install -y build-essential linux-tools-common linux-tools-generic liblz4-tool dwarves binutils elfutils gdb flex bison libncurses-dev libssl-dev libelf-dev
 	sudo apt-get install -y cmake gcc g++ make libiberty-dev autoconf zstd libboost-all-dev arch-install-scripts
-	sudo apt-get install -y libdw-dev systemtap-sdt-dev libunwind-dev libslang2-dev libperl-dev liblzma-dev libzstd-dev libcap-dev libnuma-dev libbabeltrace-ctf-dev libbfd-dev
 	sudo apt-get install -y clang clang-format clang-tools llvm
+
+	# These things are required by perf
+	sudo apt-get install -y libdw-dev systemtap-sdt-dev libunwind-dev libslang2-dev libperl-dev liblzma-dev libzstd-dev libcap-dev libnuma-dev libbabeltrace-ctf-dev libbfd-dev libpfm4-dev
+
+	# Ubuntu 22.04+ exclusive
+	sudo apt-get install -ym libtraceevent-dev || true
 }
 
 function install_dotnet {
