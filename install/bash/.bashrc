@@ -96,6 +96,7 @@ HISTCONTROL='ignoredups'
 HISTSIZE=100000
 HISTFILESIZE=200000
 HISTTIMEFORMAT='%F %T '
+shopt -s histappend
 
 # PowerLine-like PS
 ____SEP=''
@@ -179,6 +180,10 @@ if [[ -z "$TMUX" ]] && [[ -n "$SSH_CONNECTION" ]] && [[ -f "$HOME/.tmux.conf.loc
 fi
 
 # Postexec
+____save_history () {
+	history -a
+}
+
 ____show_exception () {
 	____ret="$?"
 	if [ "$____ret" -ne "0" ]; then
@@ -195,10 +200,11 @@ ____show_exception () {
 }
 
 ____post_exec () {
+	____save_history
 	____show_exception
 }
 
-PROMPT_COMMAND="${PROMPT_COMMAND}"$'\n'"____post_exec;";
+PROMPT_COMMAND="____post_exec; ${PROMPT_COMMAND}";
 
 # Idempotence
 if [[ -z "$BURUAKA_INIT_ONCE" ]]; then

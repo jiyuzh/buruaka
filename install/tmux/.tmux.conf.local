@@ -477,8 +477,11 @@ set -g @plugin 'tmux-plugins/tmux-cpu'
 set -g @plugin 'tmux-plugins/tmux-prefix-highlight'
 set -g @plugin 'tmux-plugins/tmux-resurrect'
 set -g @plugin 'tmux-plugins/tmux-continuum'
+
+set -g @resurrect-delete-backup-after '7'
+set -g @resurrect-processes '"dmesg->dmesg -w" "micro->micro *"'
 set -g @continuum-restore 'on'
-set -g @continuum-save-interval '5'
+set -g @continuum-save-interval '1'
 
 # -- custom variables ----------------------------------------------------------
 
