@@ -185,7 +185,6 @@ ____save_history () {
 }
 
 ____show_exception () {
-	____ret="$?"
 	if [ "$____ret" -ne "0" ]; then
 		____signame=""
 		if [ "$____ret" -ge "128" ]; then
@@ -200,6 +199,9 @@ ____show_exception () {
 }
 
 ____post_exec () {
+	# This must be the first line to capture user command result
+	____ret="$?"
+
 	____save_history
 	____show_exception
 }
