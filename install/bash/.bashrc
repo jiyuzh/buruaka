@@ -210,6 +210,7 @@ PROMPT_COMMAND="____post_exec; ${PROMPT_COMMAND}";
 if [[ -z "$BURUAKA_INIT_ONCE" ]]; then
 	export BURUAKA_INIT_ONCE=1
 
+	# Breakjail for sudo
 	export BURUAKA="$____buruaka"
 	mkdir -p /tmp/buruaka
 	echo "$BURUAKA" > /tmp/buruaka/BURUAKA
