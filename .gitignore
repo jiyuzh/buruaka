@@ -1,3 +1,4 @@
 bin/kernel-compile/
+lib/bandori/
 reflect/
 .vscode/
