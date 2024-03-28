@@ -22,6 +22,18 @@ if [ "$do_next" -ne 0 ] && [ -n "$kernel" ]; then
 
 	if [ -f "$kernel" ]; then
 		echo
+		echo "- Results in installed kernel $kernel:"
+		echo
+		eu-addr2line -Afie "$kernel" "$1"
+		do_next="$?"
+	fi
+fi
+
+if [ "$do_next" -ne 0 ] && [ -n "$kernel" ]; then
+	kernel=$(realpath "./vmlinux" 2>/dev/null)
+
+	if [ -f "$kernel" ]; then
+		echo
 		echo "- Results in kernel $kernel:"
 		echo
 		eu-addr2line -Afie "$kernel" "$1"
