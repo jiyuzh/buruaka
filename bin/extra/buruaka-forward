@@ -23,7 +23,7 @@ EOF
 
 # Resolve the binary folder
 
-BURU_PATH="$SCRIPT_DIR"
+BURU_PATH="$SCRIPT_DIR/.."
 
 if [ -n "${BURUAKA:-}" ] && [ -e "$BURUAKA/bin" ] &> /dev/null; then
 	BURU_PATH="$BURUAKA/bin"

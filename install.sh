@@ -111,6 +111,9 @@ function install_core {
 		python3 -m userpath append "$SCRIPT_DIR/bin"
 		export PATH="$PATH:$SCRIPT_DIR/bin"
 	fi
+
+	sudo cpan IO::Socket::SSL
+	sudo cpan Net::SSLeay
 }
 
 function install_kernbuild {

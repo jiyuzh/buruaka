@@ -94,7 +94,7 @@ sub fetchGithubApi
 	my $response = HTTP::Tiny->new->get($url);
 
 	if (!$response->{success} || !length($response->{content})) {
-		die("Unable to retrieve info from URL: $url\n");
+		die("Unable to retrieve info from URL: $url ($response->{status} $response->{reason})\nHTTP Content:\n$response->{content}");
 	}
 
 	return $response->{content};
