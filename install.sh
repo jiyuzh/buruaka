@@ -120,7 +120,7 @@ function install_kernbuild {
 	# Kernel build tools (tested for 5.15)
 	sudo apt-get update
 	sudo apt-get install -y build-essential linux-tools-common linux-tools-generic liblz4-tool dwarves binutils elfutils gdb flex bison libncurses-dev libssl-dev libelf-dev
-	sudo apt-get install -y cmake gcc g++ make libiberty-dev autoconf zstd libboost-all-dev arch-install-scripts
+	sudo apt-get install -y cmake libiberty-dev arch-install-scripts
 	sudo apt-get install -y clang clang-format clang-tools llvm ninja-build
 
 	# These things are required by perf
