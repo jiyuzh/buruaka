@@ -121,10 +121,10 @@ function install_kernbuild {
 	sudo apt-get update
 	sudo apt-get install -y build-essential linux-tools-common linux-tools-generic liblz4-tool dwarves binutils elfutils gdb flex bison libncurses-dev libssl-dev libelf-dev
 	sudo apt-get install -y cmake libiberty-dev arch-install-scripts
-	sudo apt-get install -y clang clang-format clang-tools clangd llvm lldb lld ninja-build
+	sudo apt-get install -y clang clang-format clang-tools clangd llvm lldb lld ninja-build bear
 
 	# These things are required by perf
-	sudo apt-get install -y libdw-dev systemtap-sdt-dev libunwind-dev libslang2-dev libperl-dev liblzma-dev libzstd-dev libcap-dev libnuma-dev libbabeltrace-ctf-dev libbfd-dev libpfm4-dev
+	sudo apt-get install -y libdw-dev systemtap-sdt-dev libunwind-dev libslang2-dev libperl-dev liblzma-dev libzstd-dev libcap-dev libnuma-dev libbabeltrace-ctf-dev libbfd-dev libpfm4-dev pkgconf
 
 	# Ubuntu 22.04+ exclusive
 	sudo apt-get install -ym libtraceevent-dev || true
